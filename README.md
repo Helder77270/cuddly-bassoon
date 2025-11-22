@@ -18,14 +18,25 @@ AidChain is a revolutionary blockchain-based platform built on Ripple Accelar th
 ```
 Frontend (React + Vite)
     ↓
-Smart Contracts (Accelar EVM)
+Smart Contracts (Axelar EVM - Upgradeable UUPS Proxies)
+    ├─ AidChainFactory (Deployment & Management)
+    ├─ AIDToken Proxy → AIDToken Implementation
+    └─ AidChain Proxy → AidChain Implementation
     ↓
 Services:
   - Self Protocol (zkKYC)
   - ElizaOS (Tweet parsing)
-  - Dynamics (Wallet management)
+  - Dynamic Labs (Wallet management)
   - IPFS (Storage)
 ```
+
+### Smart Contract Architecture
+
+The contracts use an upgradeable architecture:
+- **UUPS Proxy Pattern**: All main contracts are upgradeable
+- **Factory Pattern**: Centralized deployment and management
+- **Separation of Concerns**: Token, main protocol, and factory are separate
+- **Access Control**: Owner-based upgrades and administrative functions
 
 ## 📁 Project Structure
 
@@ -70,7 +81,11 @@ cuddly-bassoon/
 2. **Install smart contract dependencies**
    ```bash
    cd contracts
-   npm install
+   # Install Foundry if not already installed
+   curl -L https://foundry.paradigm.xyz | bash
+   foundryup
+   # Install contract dependencies
+   forge install
    cp .env.example .env
    # Edit .env with your configuration
    ```
@@ -78,13 +93,17 @@ cuddly-bassoon/
 3. **Deploy smart contracts**
    ```bash
    # Compile contracts
-   npm run compile
+   forge build
 
-   # Deploy to local network
-   npm run deploy:local
+   # Run tests
+   forge test
 
-   # Deploy to Accelar testnet
-   npm run deploy:testnet
+   # Deploy to local network (start Anvil first)
+   anvil  # In a separate terminal
+   forge script script/DeployAidChain.s.sol --rpc-url http://localhost:8545 --broadcast
+
+   # Deploy to Axelar testnet
+   forge script script/DeployAidChain.s.sol --rpc-url $RPC_URL --broadcast --verify
    ```
 
 4. **Install frontend dependencies**
@@ -177,7 +196,11 @@ PRIVATE_KEY=your_private_key
 ### Smart Contracts
 ```bash
 cd contracts
-npm test
+forge test
+# Or with verbosity
+forge test -vv
+# Or with gas report
+forge test --gas-report
 ```
 
 ### Frontend
@@ -303,10 +326,12 @@ For support, email support@aidchain.io or join our Discord community.
 - Zustand (State Management)
 
 **Smart Contracts:**
-- Solidity 0.8.19
-- Hardhat
-- OpenZeppelin Contracts
-- Accelar EVM
+- Solidity 0.8.22
+- Foundry
+- OpenZeppelin Contracts (Upgradeable)
+- UUPS Proxy Pattern
+- Factory Pattern
+- Axelar EVM
 
 **Backend:**
 - Node.js
