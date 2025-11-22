@@ -1,27 +1,24 @@
-import { create } from 'ipfs-http-client'
 import axios from 'axios'
 
 const IPFS_GATEWAY = import.meta.env.VITE_IPFS_GATEWAY || 'https://ipfs.io/ipfs/'
+const BACKEND_API = import.meta.env.VITE_BACKEND_API || 'http://localhost:3001'
 
 class IPFSService {
-  constructor() {
-    // Initialize IPFS client (can use Infura, Pinata, or local node)
-    this.client = create({
-      host: 'ipfs.infura.io',
-      port: 5001,
-      protocol: 'https',
-      headers: {
-        authorization: `Basic ${btoa(
-          `${import.meta.env.VITE_IPFS_PROJECT_ID}:${import.meta.env.VITE_IPFS_PROJECT_SECRET}`
-        )}`,
-      },
-    })
-  }
-
+  /**
+   * Upload file via backend to keep IPFS credentials secure
+   */
   async uploadFile(file) {
     try {
-      const added = await this.client.add(file)
-      return added.path // Returns the IPFS hash
+      const formData = new FormData()
+      formData.append('file', file)
+      
+      const response = await axios.post(`${BACKEND_API}/api/ipfs/upload`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      })
+      
+      return response.data.hash
     } catch (error) {
       console.error('Error uploading file to IPFS:', error)
       throw error
@@ -30,9 +27,11 @@ class IPFSService {
 
   async uploadJSON(data) {
     try {
-      const jsonString = JSON.stringify(data)
-      const added = await this.client.add(jsonString)
-      return added.path
+      const response = await axios.post(`${BACKEND_API}/api/ipfs/upload-json`, {
+        data
+      })
+      
+      return response.data.hash
     } catch (error) {
       console.error('Error uploading JSON to IPFS:', error)
       throw error

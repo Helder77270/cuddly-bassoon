@@ -14,6 +14,12 @@ contract AidChain is ReentrancyGuard, Ownable {
     // AID Reputation Token
     AIDToken public aidToken;
     
+    // Constants for reward calculations
+    uint256 public constant VERIFICATION_REWARD = 100; // AID tokens for zkKYC verification
+    uint256 public constant MILESTONE_COMPLETION_REWARD = 50; // AID tokens for milestone completion
+    uint256 public constant DONATION_REWARD_MULTIPLIER = 1000; // 1 AID per 0.001 ETH donated
+    uint256 public constant MILESTONE_REPUTATION_BOOST = 10; // Reputation points per milestone
+    
     // Project structure
     struct Project {
         uint256 id;
@@ -121,7 +127,7 @@ contract AidChain is ReentrancyGuard, Ownable {
         project.zkKYCVerified = true;
         
         // Award reputation tokens for verification
-        aidToken.mint(project.creator, 100 * 10**18);
+        aidToken.mint(project.creator, VERIFICATION_REWARD * 10**18);
         
         emit ZKKYCVerified(_projectId, project.creator);
     }
@@ -152,7 +158,7 @@ contract AidChain is ReentrancyGuard, Ownable {
         donorReputation[msg.sender] += msg.value;
         
         // Award AID tokens to donor (1 AID per 0.001 ETH donated)
-        uint256 aidReward = (msg.value * 1000) / 1 ether;
+        uint256 aidReward = (msg.value * DONATION_REWARD_MULTIPLIER) / 1 ether;
         if (aidReward > 0) {
             aidToken.mint(msg.sender, aidReward * 10**18);
         }
@@ -262,10 +268,10 @@ contract AidChain is ReentrancyGuard, Ownable {
             payable(project.creator).transfer(releaseAmount);
             
             // Update project reputation
-            project.reputationScore += 10;
+            project.reputationScore += MILESTONE_REPUTATION_BOOST;
             
             // Award AID tokens to project creator
-            aidToken.mint(project.creator, 50 * 10**18);
+            aidToken.mint(project.creator, MILESTONE_COMPLETION_REWARD * 10**18);
         }
         
         emit MilestoneApproved(_milestoneId, milestone.projectId);

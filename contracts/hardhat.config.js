@@ -13,11 +13,11 @@ module.exports = {
     }
   },
   networks: {
-    // Accelar EVM testnet configuration
-    accelarTestnet: {
-      url: process.env.ACCELAR_RPC_URL || "https://rpc-testnet.accelar.io",
+    // Axelar EVM testnet configuration
+    axelarTestnet: {
+      url: process.env.AXELAR_RPC_URL || "https://rpc-testnet.axelar.io",
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
-      chainId: 9999, // Replace with actual Accelar chain ID
+      chainId: 9999, // Replace with actual Axelar chain ID
     },
     // Local development
     localhost: {

@@ -1,5 +1,7 @@
 const express = require('express')
 const cors = require('cors')
+const multer = require('multer')
+const { create } = require('ipfs-http-client')
 require('dotenv').config()
 
 const elizaService = require('./services/elizaService')
@@ -7,6 +9,21 @@ const twitterService = require('./services/twitterService')
 
 const app = express()
 const PORT = process.env.PORT || 3001
+
+// Configure multer for file uploads
+const upload = multer({ storage: multer.memoryStorage() })
+
+// Initialize IPFS client (server-side only for security)
+const ipfsClient = create({
+  host: 'ipfs.infura.io',
+  port: 5001,
+  protocol: 'https',
+  headers: {
+    authorization: `Basic ${Buffer.from(
+      `${process.env.IPFS_PROJECT_ID}:${process.env.IPFS_PROJECT_SECRET}`
+    ).toString('base64')}`,
+  },
+})
 
 // Middleware
 app.use(cors())
@@ -52,7 +69,38 @@ app.post('/api/twitter/monitor', async (req, res) => {
   }
 })
 
-// IPFS proxy endpoints
+// IPFS upload endpoints (secure - credentials on backend only)
+app.post('/api/ipfs/upload', upload.single('file'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file provided' })
+    }
+    
+    const added = await ipfsClient.add(req.file.buffer)
+    res.json({ hash: added.path })
+  } catch (error) {
+    console.error('Error uploading to IPFS:', error)
+    res.status(500).json({ error: 'Failed to upload to IPFS' })
+  }
+})
+
+app.post('/api/ipfs/upload-json', async (req, res) => {
+  try {
+    const { data } = req.body
+    if (!data) {
+      return res.status(400).json({ error: 'No data provided' })
+    }
+    
+    const jsonString = JSON.stringify(data)
+    const added = await ipfsClient.add(jsonString)
+    res.json({ hash: added.path })
+  } catch (error) {
+    console.error('Error uploading JSON to IPFS:', error)
+    res.status(500).json({ error: 'Failed to upload JSON to IPFS' })
+  }
+})
+
+// IPFS proxy endpoint
 app.get('/api/ipfs/:hash', async (req, res) => {
   try {
     const { hash } = req.params

@@ -83,17 +83,19 @@ class SelfProtocolService {
    */
   async generateProof(userData) {
     try {
-      // Simulate proof generation
       // In production, this would involve:
       // 1. User provides personal information
       // 2. Information is verified off-chain
-      // 3. Zero-knowledge proof is generated
+      // 3. Zero-knowledge proof is generated using cryptographic methods
       // 4. Proof is submitted on-chain for verification
       
+      // Note: This is a simplified mock. In production, use proper
+      // cryptographic libraries and Self Protocol's SDK
       const proof = {
         verified: true,
         timestamp: Date.now(),
-        proofData: btoa(JSON.stringify(userData)),
+        // In production, this would be a cryptographic proof, not encoded data
+        proofHash: `proof_${Date.now()}_${Math.random().toString(36).substring(7)}`,
       }
       
       return proof
