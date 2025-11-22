@@ -1,0 +1,30 @@
+{
+  "name": "aidchain",
+  "version": "1.0.0",
+  "description": "Decentralized humanitarian funding protocol on Ripple Accelar",
+  "main": "index.js",
+  "scripts": {
+    "install:all": "cd contracts && npm install && cd ../frontend && npm install && cd ../backend && npm install",
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:all": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "build:frontend": "cd frontend && npm run build",
+    "deploy:contracts": "cd contracts && npm run deploy:testnet",
+    "compile:contracts": "cd contracts && npm run compile",
+    "test:contracts": "cd contracts && npm test",
+    "clean": "rm -rf */node_modules */dist */build */.next"
+  },
+  "keywords": [
+    "blockchain",
+    "humanitarian",
+    "web3",
+    "axelar",
+    "defi",
+    "charity"
+  ],
+  "author": "AidChain Team",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.2.1"
+  }
+}
