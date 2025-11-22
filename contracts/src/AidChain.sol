@@ -1,15 +1,19 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.22;
 
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+// Note: OpenZeppelin v5 ReentrancyGuard is safe for upgradeable contracts
+// It uses a dedicated storage slot and doesn't need initialization
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "./AIDToken.sol";
 
 /**
  * @title AidChain
- * @dev Main contract for the decentralized humanitarian funding protocol
+ * @dev Main contract for the decentralized humanitarian funding protocol - Upgradeable
  */
-contract AidChain is ReentrancyGuard, Ownable {
+contract AidChain is Initializable, ReentrancyGuard, OwnableUpgradeable, UUPSUpgradeable {
     
     // AID Reputation Token
     AIDToken public aidToken;
@@ -78,9 +82,17 @@ contract AidChain is ReentrancyGuard, Ownable {
     event ReputationUpdated(address indexed user, uint256 newReputation);
     event ZKKYCVerified(uint256 indexed projectId, address indexed creator);
     
-    constructor(address _aidTokenAddress) {
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+    
+    function initialize(address _aidTokenAddress) public initializer {
+        __Ownable_init(msg.sender);
         aidToken = AIDToken(_aidTokenAddress);
     }
+    
+    function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
     
     /**
      * @dev Create a new humanitarian project
@@ -313,24 +325,5 @@ contract AidChain is ReentrancyGuard, Ownable {
      */
     function getDonorReputation(address _donor) external view returns (uint256) {
         return donorReputation[_donor];
-    }
-}
-
-/**
- * @title AIDToken
- * @dev AID Reputation Token (ERC20)
- */
-contract AIDToken is ERC20, Ownable {
-    address public aidChainContract;
-    
-    constructor() ERC20("AID Reputation Token", "AID") {}
-    
-    function setAidChainContract(address _aidChainContract) external onlyOwner {
-        aidChainContract = _aidChainContract;
-    }
-    
-    function mint(address to, uint256 amount) external {
-        require(msg.sender == aidChainContract || msg.sender == owner(), "Not authorized");
-        _mint(to, amount);
     }
 }
