@@ -4,6 +4,8 @@ pragma solidity ^0.8.22;
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+// Note: OpenZeppelin v5 ReentrancyGuard is safe for upgradeable contracts
+// It uses a dedicated storage slot and doesn't need initialization
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "./AIDToken.sol";
 
