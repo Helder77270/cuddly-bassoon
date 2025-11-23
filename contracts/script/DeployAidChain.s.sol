@@ -1,10 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.22;
 
-import "forge-std/Script.sol";
-import "../src/AidChainFactory.sol";
-import "../src/AidChain.sol";
-import "../src/AIDToken.sol";
+import {Script, console} from "forge-std/Script.sol";
+import {AidChainFactory} from "../src/AidChainFactory.sol";
 
 /**
  * @title DeployAidChain
@@ -20,7 +18,7 @@ contract DeployAidChain is Script {
         address projectCreator = vm.envOr("PROJECT_CREATOR", msg.sender);
         string memory projectName = vm.envOr("PROJECT_NAME", string("Humanitarian Aid Project"));
         string memory projectDescription = vm.envOr("PROJECT_DESCRIPTION", string("Decentralized humanitarian funding project"));
-        string memory projectIPFS = vm.envOr("PROJECT_IPFS", string("QmDefaultIPFSHash"));
+        string memory projectIpfs = vm.envOr("PROJECT_IPFS", string("QmDefaultIPFSHash"));
         uint256 fundingGoal = vm.envOr("FUNDING_GOAL", uint256(10 ether));
         
         // Start broadcasting transactions
@@ -35,7 +33,7 @@ contract DeployAidChain is Script {
             projectCreator,
             projectName,
             projectDescription,
-            projectIPFS,
+            projectIpfs,
             fundingGoal
         );
         
@@ -45,9 +43,9 @@ contract DeployAidChain is Script {
         
         // Get implementation addresses
         (
-            address aidTokenProxyAddr,
+            ,
             address aidTokenImpl,
-            address aidChainProxyAddr,
+            ,
             address aidChainImpl,
             uint256 timestamp
         ) = factory.getLatestDeployment();

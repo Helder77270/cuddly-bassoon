@@ -1,19 +1,19 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.22;
 
-import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "./AidChain.sol";
-import "./AIDToken.sol";
+import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {AidChain} from "./AidChain.sol";
+import {AidToken} from "./AidToken.sol";
 
 /**
  * @title AidChainFactory
- * @dev Factory contract for deploying and managing upgradeable AidChain and AIDToken proxies
+ * @dev Factory contract for deploying and managing upgradeable AidChain and AidToken proxies
  */
 contract AidChainFactory is Ownable {
     
     // Events
-    event AIDTokenDeployed(address indexed proxy, address indexed implementation);
+    event AidTokenDeployed(address indexed proxy, address indexed implementation);
     event AidChainDeployed(address indexed proxy, address indexed implementation, address indexed aidToken);
     event ImplementationUpgraded(address indexed proxy, address indexed newImplementation);
     
@@ -32,18 +32,18 @@ contract AidChainFactory is Ownable {
     constructor() Ownable(msg.sender) {}
     
     /**
-     * @dev Deploy a new AIDToken with upgradeable proxy
+     * @dev Deploy a new AidToken with upgradeable proxy
      * @return proxy The address of the deployed proxy
      * @return implementation The address of the implementation contract
      */
-    function deployAIDToken() public onlyOwner returns (address proxy, address implementation) {
+    function deployAidToken() public onlyOwner returns (address proxy, address implementation) {
         // Deploy implementation
-        AIDToken aidTokenImpl = new AIDToken();
+        AidToken aidTokenImpl = new AidToken();
         implementation = address(aidTokenImpl);
         
         // Deploy proxy
         bytes memory initData = abi.encodeWithSelector(
-            AIDToken.initialize.selector
+            AidToken.initialize.selector
         );
         ERC1967Proxy aidTokenProxy = new ERC1967Proxy(implementation, initData);
         proxy = address(aidTokenProxy);
@@ -51,12 +51,12 @@ contract AidChainFactory is Ownable {
         // Mark as deployed by factory
         isDeployedByFactory[proxy] = true;
         
-        emit AIDTokenDeployed(proxy, implementation);
+        emit AidTokenDeployed(proxy, implementation);
     }
     
     /**
      * @dev Deploy a new AidChain with upgradeable proxy (single project)
-     * @param _aidTokenAddress The address of the AIDToken contract
+     * @param _aidTokenAddress The address of the AidToken contract
      * @param _creator The project creator (will own the contract)
      * @param _name Project name
      * @param _description Project description
@@ -73,7 +73,7 @@ contract AidChainFactory is Ownable {
         string memory _ipfsHash,
         uint256 _fundingGoal
     ) public onlyOwner returns (address proxy, address implementation) {
-        require(_aidTokenAddress != address(0), "Invalid AIDToken address");
+        require(_aidTokenAddress != address(0), "Invalid AidToken address");
         require(_creator != address(0), "Invalid creator address");
         
         // Deploy implementation
@@ -119,9 +119,9 @@ contract AidChainFactory is Ownable {
         address aidTokenProxy,
         address aidChainProxy
     ) {
-        // Deploy AIDToken
+        // Deploy AidToken
         address aidTokenImpl;
-        (aidTokenProxy, aidTokenImpl) = deployAIDToken();
+        (aidTokenProxy, aidTokenImpl) = deployAidToken();
         
         // Deploy AidChain for this specific project
         address aidChainImpl;
@@ -134,12 +134,12 @@ contract AidChainFactory is Ownable {
             _fundingGoal
         );
         
-        // Set AidChain as authorized minter on AIDToken
-        AIDToken(aidTokenProxy).setAidChainContract(aidChainProxy);
+        // Set AidChain as authorized minter on AidToken
+        AidToken(aidTokenProxy).setAidChainContract(aidChainProxy);
         
         // Note: Project creator (_creator) is already the owner of the AidChain contract
-        // Transfer AIDToken ownership to factory owner for management
-        AIDToken(aidTokenProxy).transferOwnership(owner());
+        // Transfer AidToken ownership to factory owner for management
+        AidToken(aidTokenProxy).transferOwnership(owner());
         
         // Record deployment
         deployments.push(Deployment({

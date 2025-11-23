@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.22;
 
-import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 // Note: OpenZeppelin v5 ReentrancyGuard is safe for upgradeable contracts
 // It uses a dedicated storage slot and doesn't need initialization
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import "./AIDToken.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import {AidToken} from "./AidToken.sol";
 
 /**
  * @title AidChain
@@ -16,7 +16,7 @@ import "./AIDToken.sol";
 contract AidChain is Initializable, ReentrancyGuard, OwnableUpgradeable, UUPSUpgradeable {
     
     // AID Reputation Token
-    AIDToken public aidToken;
+    AidToken public aidToken;
     
     // Constants for reward calculations
     uint256 public constant VERIFICATION_REWARD = 100; // AID tokens for zkKYC verification
@@ -35,7 +35,7 @@ contract AidChain is Initializable, ReentrancyGuard, OwnableUpgradeable, UUPSUpg
         uint256 fundsRaised;
         uint256 createdAt;
         bool active;
-        bool zkKYCVerified;
+        bool zkKycVerified;
         uint256 reputationScore;
     }
     
@@ -45,7 +45,7 @@ contract AidChain is Initializable, ReentrancyGuard, OwnableUpgradeable, UUPSUpg
         uint256 projectId;
         string description;
         uint256 fundingAmount;
-        string proofIPFSHash;
+        string proofIpfsHash;
         bool completed;
         bool approved;
         uint256 votesFor;
@@ -80,8 +80,8 @@ contract AidChain is Initializable, ReentrancyGuard, OwnableUpgradeable, UUPSUpg
     event MilestoneApproved(uint256 indexed milestoneId, uint256 indexed projectId);
     event FundsReleased(uint256 indexed projectId, uint256 indexed milestoneId, uint256 amount);
     event ReputationUpdated(address indexed user, uint256 newReputation);
-    event ZKKYCVerified(uint256 indexed projectId, address indexed creator);
-    event MilestoneProofSubmitted(uint256 indexed milestoneId, string proofIPFSHash, uint256 timestamp);
+    event zkKycVerified(uint256 indexed projectId, address indexed creator);
+    event MilestoneProofSubmitted(uint256 indexed milestoneId, string proofIpfsHash, uint256 timestamp);
     event MilestoneFinalized(uint256 indexed milestoneId, uint256 timestamp);
 
     // Typed errors
@@ -116,7 +116,7 @@ contract AidChain is Initializable, ReentrancyGuard, OwnableUpgradeable, UUPSUpg
         uint256 _fundingGoal
     ) public initializer {
         __Ownable_init(_creator);
-        aidToken = AIDToken(_aidTokenAddress);
+        aidToken = AidToken(_aidTokenAddress);
 
         project = Project({
             id: 1,
@@ -128,7 +128,7 @@ contract AidChain is Initializable, ReentrancyGuard, OwnableUpgradeable, UUPSUpg
             fundsRaised: 0,
             createdAt: block.timestamp,
             active: true,
-            zkKYCVerified: false,
+            zkKycVerified: false,
             reputationScore: 0
         });
 
@@ -145,17 +145,17 @@ contract AidChain is Initializable, ReentrancyGuard, OwnableUpgradeable, UUPSUpg
     /**
      * @dev Verify zkKYC for a project creator
      */
-    function verifyZKKYC() external {
-        if (project.zkKYCVerified) revert ProjectAlreadyVerified(project.id);
+    function verifyZkKyc() external {
+        if (project.zkKycVerified) revert ProjectAlreadyVerified(project.id);
 
         // In production, this would verify zkKYC proof from Self Protocol
         // For now, we'll use a simple verification mechanism
-        project.zkKYCVerified = true;
+        project.zkKycVerified = true;
 
         // Award reputation tokens for verification
         aidToken.mint(project.creator, VERIFICATION_REWARD * 10**18);
 
-        emit ZKKYCVerified(project.id, project.creator);
+        emit zkKycVerified(project.id, project.creator);
     }
     
     /**
@@ -164,7 +164,7 @@ contract AidChain is Initializable, ReentrancyGuard, OwnableUpgradeable, UUPSUpg
     function fundProject() external payable nonReentrant {
         if (msg.value == 0) revert DonationMustBePositive();
         if (!project.active) revert ProjectNotActive();
-        if (!project.zkKYCVerified) revert ProjectNotVerified();
+        if (!project.zkKycVerified) revert ProjectNotVerified();
 
         project.fundsRaised += msg.value;
         projectDonations[msg.sender] += msg.value;
@@ -208,7 +208,7 @@ contract AidChain is Initializable, ReentrancyGuard, OwnableUpgradeable, UUPSUpg
             projectId: project.id,
             description: _description,
             fundingAmount: _fundingAmount,
-            proofIPFSHash: "",
+            proofIpfsHash: "",
             completed: false,
             approved: false,
             votesFor: 0,
@@ -225,7 +225,7 @@ contract AidChain is Initializable, ReentrancyGuard, OwnableUpgradeable, UUPSUpg
     /**
      * @dev Submit proof of milestone completion
      */
-    function submitMilestoneProof(uint256 _milestoneId, string memory _proofIPFSHash) external {
+    function submitMilestoneProof(uint256 _milestoneId, string memory _proofIpfsHash) external {
         // This function now anchors a proof (IPFS hash) and optionally finalizes the milestone.
         // To avoid emitting many state changes for every off-chain update, callers can emit anchors
         // and only finalize when ready. For backward compatibility we provide a simple anchor-and-finalize API.
@@ -236,8 +236,8 @@ contract AidChain is Initializable, ReentrancyGuard, OwnableUpgradeable, UUPSUpg
         if (milestone.completed) revert MilestoneAlreadyCompleted(_milestoneId);
 
         // Update the stored last-proof anchor (cheap) and emit an event for indexing more proofs off-chain.
-        milestone.proofIPFSHash = _proofIPFSHash;
-        emit MilestoneProofSubmitted(_milestoneId, _proofIPFSHash, block.timestamp);
+        milestone.proofIpfsHash = _proofIpfsHash;
+        emit MilestoneProofSubmitted(_milestoneId, _proofIpfsHash, block.timestamp);
 
         // If the creator wants to mark the milestone as completed in the same tx, they can call
         // `finalizeMilestone` (separate call) or we can support a boolean finalize flag in future.

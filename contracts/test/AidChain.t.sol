@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.22;
 
-import "forge-std/Test.sol";
-import "../src/AidChainFactory.sol";
-import "../src/AidChain.sol";
-import "../src/AIDToken.sol";
+import {Test} from "forge-std/Test.sol";
+import {AidChainFactory} from "../src/AidChainFactory.sol";
+import {AidChain} from "../src/AidChain.sol";
+import {AidToken} from "../src/AidToken.sol";
 
 /**
  * @title AidChainTest
@@ -13,7 +13,7 @@ import "../src/AIDToken.sol";
 contract AidChainTest is Test {
     AidChainFactory public factory;
     AidChain public aidChain;
-    AIDToken public aidToken;
+    AidToken public aidToken;
     
     address public factoryOwner;
     address public projectCreator;
@@ -40,7 +40,7 @@ contract AidChainTest is Test {
             10 ether
         );
         
-        aidToken = AIDToken(tokenProxy);
+        aidToken = AidToken(tokenProxy);
         aidChain = AidChain(payable(chainProxy));
         
         // Fund test accounts
@@ -50,7 +50,7 @@ contract AidChainTest is Test {
     
     // ===== Project Initialization Tests =====
     
-    function test_ProjectInitialization() public {
+    function test_ProjectInitialization() public view {
         AidChain.Project memory project = aidChain.getProject();
         
         assertEq(project.id, 1, "Project ID should be 1");
@@ -59,21 +59,21 @@ contract AidChainTest is Test {
         assertEq(project.fundingGoal, 10 ether, "Funding goal should match");
         assertEq(project.fundsRaised, 0, "Funds raised should be 0");
         assertTrue(project.active, "Project should be active");
-        assertFalse(project.zkKYCVerified, "Project should not be verified initially");
+        assertFalse(project.zkKycVerified, "Project should not be verified initially");
     }
     
-    function test_ProjectCreatorIsOwner() public {
+    function test_ProjectCreatorIsOwner() public view {
         assertEq(aidChain.owner(), projectCreator, "Project creator should be owner");
     }
     
     // ===== zkKYC Verification Tests =====
     
-    function test_VerifyZKKYC() public {
+    function test_verifyZkKyc() public {
         // Verify zkKYC
-        aidChain.verifyZKKYC();
+        aidChain.verifyZkKyc();
         
         AidChain.Project memory project = aidChain.getProject();
-        assertTrue(project.zkKYCVerified, "Project should be verified");
+        assertTrue(project.zkKycVerified, "Project should be verified");
         
         // Check that creator received verification reward
         uint256 expectedReward = aidChain.VERIFICATION_REWARD() * 10**18;
@@ -81,17 +81,17 @@ contract AidChainTest is Test {
     }
     
     function test_RevertWhen_VerifyAlreadyVerified() public {
-        aidChain.verifyZKKYC();
+        aidChain.verifyZkKyc();
         
         vm.expectRevert(abi.encodeWithSelector(AidChain.ProjectAlreadyVerified.selector, 1));
-        aidChain.verifyZKKYC();
+        aidChain.verifyZkKyc();
     }
     
     // ===== Funding Tests =====
     
     function test_FundProject() public {
         // Verify project first
-        aidChain.verifyZKKYC();
+        aidChain.verifyZkKyc();
         
         // Fund project
         uint256 donationAmount = 1 ether;
@@ -116,7 +116,7 @@ contract AidChainTest is Test {
     }
     
     function test_RevertWhen_FundWithZeroAmount() public {
-        aidChain.verifyZKKYC();
+        aidChain.verifyZkKyc();
         
         vm.prank(donor1);
         vm.expectRevert(abi.encodeWithSelector(AidChain.DonationMustBePositive.selector));
@@ -124,7 +124,7 @@ contract AidChainTest is Test {
     }
     
     function test_MultipleDonations() public {
-        aidChain.verifyZKKYC();
+        aidChain.verifyZkKyc();
         
         vm.prank(donor1);
         aidChain.fundProject{value: 1 ether}();
@@ -179,7 +179,7 @@ contract AidChainTest is Test {
         aidChain.submitMilestoneProof(milestoneId, "QmProof123");
         
         AidChain.Milestone memory milestone = aidChain.getMilestone(milestoneId);
-        assertEq(milestone.proofIPFSHash, "QmProof123");
+        assertEq(milestone.proofIpfsHash, "QmProof123");
         assertFalse(milestone.completed, "Should not be completed yet (only anchored)");
     }
     
@@ -225,7 +225,7 @@ contract AidChainTest is Test {
     
     function test_VoteOnMilestone() public {
         // Verify and fund project
-        aidChain.verifyZKKYC();
+        aidChain.verifyZkKyc();
         
         vm.prank(projectCreator);
         uint256 milestoneId = aidChain.createMilestone("Milestone", 2 ether, 7 days);
@@ -250,7 +250,7 @@ contract AidChainTest is Test {
     }
     
     function test_RevertWhen_VotingBeforeCompletion() public {
-        aidChain.verifyZKKYC();
+        aidChain.verifyZkKyc();
         
         vm.prank(projectCreator);
         uint256 milestoneId = aidChain.createMilestone("Milestone", 2 ether, 7 days);
@@ -264,7 +264,7 @@ contract AidChainTest is Test {
     }
     
     function test_RevertWhen_NonDonorVotes() public {
-        aidChain.verifyZKKYC();
+        aidChain.verifyZkKyc();
         
         vm.prank(projectCreator);
         uint256 milestoneId = aidChain.createMilestone("Milestone", 2 ether, 7 days);
@@ -278,7 +278,7 @@ contract AidChainTest is Test {
     }
     
     function test_RevertWhen_VotingTwice() public {
-        aidChain.verifyZKKYC();
+        aidChain.verifyZkKyc();
         
         vm.prank(projectCreator);
         uint256 milestoneId = aidChain.createMilestone("Milestone", 2 ether, 7 days);
@@ -299,7 +299,7 @@ contract AidChainTest is Test {
     }
     
     function test_MilestoneApprovalAndFundRelease() public {
-        aidChain.verifyZKKYC();
+        aidChain.verifyZkKyc();
         
         // Fund project
         vm.prank(donor1);
@@ -338,7 +338,7 @@ contract AidChainTest is Test {
     // ===== View Function Tests =====
     
     function test_GetDonorHistory() public {
-        aidChain.verifyZKKYC();
+        aidChain.verifyZkKyc();
         
         vm.prank(donor1);
         aidChain.fundProject{value: 1 ether}();
@@ -367,7 +367,7 @@ contract AidChainTest is Test {
     }
     
     function test_GetDonorReputation() public {
-        aidChain.verifyZKKYC();
+        aidChain.verifyZkKyc();
         
         vm.prank(donor1);
         aidChain.fundProject{value: 3 ether}();

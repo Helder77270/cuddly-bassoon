@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.22;
 
-import "forge-std/Test.sol";
-import "../src/AidChainFactory.sol";
-import "../src/AidChain.sol";
-import "../src/AIDToken.sol";
+import {Test} from "forge-std/Test.sol";
+import {AidChainFactory} from "../src/AidChainFactory.sol";
+import {AidChain} from "../src/AidChain.sol";
+import {AidToken} from "../src/AidToken.sol";
 
 /**
  * @title AidChainFactoryTest
@@ -25,22 +25,22 @@ contract AidChainFactoryTest is Test {
         factory = new AidChainFactory();
     }
     
-    function test_DeployAIDToken() public {
-        (address proxy, address implementation) = factory.deployAIDToken();
+    function test_DeployAidToken() public {
+        (address proxy, address implementation) = factory.deployAidToken();
         
         assertTrue(proxy != address(0), "Proxy should be deployed");
         assertTrue(implementation != address(0), "Implementation should be deployed");
         assertTrue(factory.isDeployedByFactory(proxy), "Should be marked as deployed by factory");
         
         // Verify token properties
-        AIDToken token = AIDToken(proxy);
+        AidToken token = AidToken(proxy);
         assertEq(token.name(), "AID Reputation Token");
         assertEq(token.symbol(), "AID");
     }
     
     function test_DeployAidChain() public {
-        // First deploy AIDToken
-        (address tokenProxy,) = factory.deployAIDToken();
+        // First deploy AidToken
+        (address tokenProxy,) = factory.deployAidToken();
         
         // Then deploy AidChain for a specific project
         (address chainProxy, address implementation) = factory.deployAidChain(
@@ -81,7 +81,7 @@ contract AidChainFactoryTest is Test {
         assertTrue(chainProxy != address(0), "Chain proxy should be deployed");
         
         // Verify linking
-        AIDToken token = AIDToken(tokenProxy);
+        AidToken token = AidToken(tokenProxy);
         AidChain chain = AidChain(chainProxy);
         
         assertEq(address(chain.aidToken()), tokenProxy, "AidChain should reference correct token");
@@ -99,7 +99,7 @@ contract AidChainFactoryTest is Test {
     
     function test_DeployMultipleProjects() public {
         // Deploy first project
-        (address token1, address chain1) = factory.deployCompleteSystem(
+        (, address chain1) = factory.deployCompleteSystem(
             projectCreator1,
             "Project 1",
             "Description 1",
@@ -108,7 +108,7 @@ contract AidChainFactoryTest is Test {
         );
         
         // Deploy second project (each project gets its own AidChain contract)
-        (address token2, address chain2) = factory.deployCompleteSystem(
+        (, address chain2) = factory.deployCompleteSystem(
             projectCreator2,
             "Project 2",
             "Description 2",
@@ -178,7 +178,7 @@ contract AidChainFactoryTest is Test {
     function test_RevertWhen_NonOwnerDeploys() public {
         vm.prank(projectCreator1);
         vm.expectRevert();
-        factory.deployAIDToken();
+        factory.deployAidToken();
         
         vm.prank(projectCreator1);
         vm.expectRevert();
@@ -192,7 +192,7 @@ contract AidChainFactoryTest is Test {
     }
     
     function test_RevertWhen_DeployAidChainWithInvalidToken() public {
-        vm.expectRevert("Invalid AIDToken address");
+        vm.expectRevert("Invalid AidToken address");
         factory.deployAidChain(
             address(0),
             projectCreator1,
@@ -204,7 +204,7 @@ contract AidChainFactoryTest is Test {
     }
     
     function test_RevertWhen_DeployAidChainWithInvalidCreator() public {
-        (address tokenProxy,) = factory.deployAIDToken();
+        (address tokenProxy,) = factory.deployAidToken();
         
         vm.expectRevert("Invalid creator address");
         factory.deployAidChain(
