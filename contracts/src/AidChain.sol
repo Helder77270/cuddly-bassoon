@@ -62,14 +62,14 @@ contract AidChain is Initializable, ReentrancyGuard, OwnableUpgradeable, UUPSUpg
     }
     
     // State variables
-    uint256 public projectCount;
+    // This contract represents a single project. `project` holds that project's data.
+    Project public project;
     uint256 public milestoneCount;
-    mapping(uint256 => Project) public projects;
     mapping(uint256 => Milestone) public milestones;
-    mapping(uint256 => uint256[]) public projectMilestones;
+    uint256[] public projectMilestones;
     mapping(address => uint256) public donorReputation;
     mapping(uint256 => mapping(address => bool)) public milestoneVotes;
-    mapping(uint256 => mapping(address => uint256)) public projectDonations;
+    mapping(address => uint256) public projectDonations;
     mapping(address => Donation[]) public donorHistory;
     
     // Events
@@ -81,36 +81,46 @@ contract AidChain is Initializable, ReentrancyGuard, OwnableUpgradeable, UUPSUpg
     event FundsReleased(uint256 indexed projectId, uint256 indexed milestoneId, uint256 amount);
     event ReputationUpdated(address indexed user, uint256 newReputation);
     event ZKKYCVerified(uint256 indexed projectId, address indexed creator);
+    event MilestoneProofSubmitted(uint256 indexed milestoneId, string proofIPFSHash, uint256 timestamp);
+    event MilestoneFinalized(uint256 indexed milestoneId, uint256 timestamp);
+
+    // Typed errors
+    error InvalidMilestoneId(uint256 milestoneId);
+    error NotProjectCreator(address sender);
+    error MilestoneAlreadyCompleted(uint256 milestoneId);
+    error MilestoneNotCompleted(uint256 milestoneId);
+    error MilestoneAlreadyApproved(uint256 milestoneId);
+    error VotingPeriodEnded(uint256 milestoneId);
+    error AlreadyVoted(uint256 milestoneId, address voter);
+    error NotADonor(address voter);
+    error DonationMustBePositive();
+    error ProjectNotActive();
+    error ProjectNotVerified();
+    error ProjectAlreadyVerified(uint256 projectId);
     
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
     }
-    
-    function initialize(address _aidTokenAddress) public initializer {
-        __Ownable_init(msg.sender);
-        aidToken = AIDToken(_aidTokenAddress);
-    }
-    
-    function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
-    
+
     /**
-     * @dev Create a new humanitarian project
+     * @dev Initialize the AidChain contract for a single project.
+     * The `_creator` is the project owner and will be set as the contract owner.
      */
-    function createProject(
+    function initialize(
+        address _aidTokenAddress,
+        address _creator,
         string memory _name,
         string memory _description,
         string memory _ipfsHash,
         uint256 _fundingGoal
-    ) external returns (uint256) {
-        require(bytes(_name).length > 0, "Name cannot be empty");
-        require(_fundingGoal > 0, "Funding goal must be positive");
-        
-        projectCount++;
-        
-        projects[projectCount] = Project({
-            id: projectCount,
-            creator: msg.sender,
+    ) public initializer {
+        __Ownable_init(_creator);
+        aidToken = AIDToken(_aidTokenAddress);
+
+        project = Project({
+            id: 1,
+            creator: _creator,
             name: _name,
             description: _description,
             ipfsHash: _ipfsHash,
@@ -121,61 +131,62 @@ contract AidChain is Initializable, ReentrancyGuard, OwnableUpgradeable, UUPSUpg
             zkKYCVerified: false,
             reputationScore: 0
         });
-        
-        emit ProjectCreated(projectCount, msg.sender, _name, _fundingGoal);
-        return projectCount;
+
+        emit ProjectCreated(1, _creator, _name, _fundingGoal);
     }
+    
+    function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
+    
+    /**
+     * @dev Create a new humanitarian project
+     */
+    // Project creation is done at `initialize` time. Each AidChain equals one project.
     
     /**
      * @dev Verify zkKYC for a project creator
      */
-    function verifyZKKYC(uint256 _projectId) external {
-        require(_projectId > 0 && _projectId <= projectCount, "Invalid project ID");
-        Project storage project = projects[_projectId];
-        require(!project.zkKYCVerified, "Already verified");
-        
+    function verifyZKKYC() external {
+        if (project.zkKYCVerified) revert ProjectAlreadyVerified(project.id);
+
         // In production, this would verify zkKYC proof from Self Protocol
         // For now, we'll use a simple verification mechanism
         project.zkKYCVerified = true;
-        
+
         // Award reputation tokens for verification
         aidToken.mint(project.creator, VERIFICATION_REWARD * 10**18);
-        
-        emit ZKKYCVerified(_projectId, project.creator);
+
+        emit ZKKYCVerified(project.id, project.creator);
     }
     
     /**
      * @dev Fund a project
      */
-    function fundProject(uint256 _projectId) external payable nonReentrant {
-        require(_projectId > 0 && _projectId <= projectCount, "Invalid project ID");
-        require(msg.value > 0, "Donation must be positive");
-        
-        Project storage project = projects[_projectId];
-        require(project.active, "Project is not active");
-        require(project.zkKYCVerified, "Project creator not verified");
-        
+    function fundProject() external payable nonReentrant {
+        if (msg.value == 0) revert DonationMustBePositive();
+        if (!project.active) revert ProjectNotActive();
+        if (!project.zkKYCVerified) revert ProjectNotVerified();
+
         project.fundsRaised += msg.value;
-        projectDonations[_projectId][msg.sender] += msg.value;
-        
+        projectDonations[msg.sender] += msg.value;
+
         // Record donation history
         donorHistory[msg.sender].push(Donation({
             donor: msg.sender,
             amount: msg.value,
             timestamp: block.timestamp,
-            projectId: _projectId
+            projectId: project.id
         }));
-        
+
         // Update donor reputation
         donorReputation[msg.sender] += msg.value;
-        
+
         // Award AID tokens to donor (1 AID per 0.001 ETH donated)
         uint256 aidReward = (msg.value * DONATION_REWARD_MULTIPLIER) / 1 ether;
         if (aidReward > 0) {
             aidToken.mint(msg.sender, aidReward * 10**18);
         }
-        
-        emit ProjectFunded(_projectId, msg.sender, msg.value);
+
+        emit ProjectFunded(project.id, msg.sender, msg.value);
         emit ReputationUpdated(msg.sender, donorReputation[msg.sender]);
     }
     
@@ -183,21 +194,18 @@ contract AidChain is Initializable, ReentrancyGuard, OwnableUpgradeable, UUPSUpg
      * @dev Create a milestone for a project
      */
     function createMilestone(
-        uint256 _projectId,
         string memory _description,
         uint256 _fundingAmount,
         uint256 _votingDuration
     ) external returns (uint256) {
-        require(_projectId > 0 && _projectId <= projectCount, "Invalid project ID");
-        Project storage project = projects[_projectId];
-        require(msg.sender == project.creator, "Only project creator can create milestones");
-        require(project.active, "Project is not active");
-        
+        if (msg.sender != project.creator) revert NotProjectCreator(msg.sender);
+        if (!project.active) revert ProjectNotActive();
+
         milestoneCount++;
-        
+
         milestones[milestoneCount] = Milestone({
             id: milestoneCount,
-            projectId: _projectId,
+            projectId: project.id,
             description: _description,
             fundingAmount: _fundingAmount,
             proofIPFSHash: "",
@@ -207,10 +215,10 @@ contract AidChain is Initializable, ReentrancyGuard, OwnableUpgradeable, UUPSUpg
             votesAgainst: 0,
             votingDeadline: block.timestamp + _votingDuration
         });
-        
-        projectMilestones[_projectId].push(milestoneCount);
-        
-        emit MilestoneCreated(milestoneCount, _projectId, _description);
+
+        projectMilestones.push(milestoneCount);
+
+        emit MilestoneCreated(milestoneCount, project.id, _description);
         return milestoneCount;
     }
     
@@ -218,30 +226,37 @@ contract AidChain is Initializable, ReentrancyGuard, OwnableUpgradeable, UUPSUpg
      * @dev Submit proof of milestone completion
      */
     function submitMilestoneProof(uint256 _milestoneId, string memory _proofIPFSHash) external {
-        require(_milestoneId > 0 && _milestoneId <= milestoneCount, "Invalid milestone ID");
+        // This function now anchors a proof (IPFS hash) and optionally finalizes the milestone.
+        // To avoid emitting many state changes for every off-chain update, callers can emit anchors
+        // and only finalize when ready. For backward compatibility we provide a simple anchor-and-finalize API.
+        if (_milestoneId == 0 || _milestoneId > milestoneCount) revert InvalidMilestoneId(_milestoneId);
         Milestone storage milestone = milestones[_milestoneId];
-        Project storage project = projects[milestone.projectId];
-        require(msg.sender == project.creator, "Only project creator can submit proof");
-        require(!milestone.completed, "Milestone already completed");
-        
+        Project storage p = project;
+        if (msg.sender != p.creator) revert NotProjectCreator(msg.sender);
+        if (milestone.completed) revert MilestoneAlreadyCompleted(_milestoneId);
+
+        // Update the stored last-proof anchor (cheap) and emit an event for indexing more proofs off-chain.
         milestone.proofIPFSHash = _proofIPFSHash;
-        milestone.completed = true;
+        emit MilestoneProofSubmitted(_milestoneId, _proofIPFSHash, block.timestamp);
+
+        // If the creator wants to mark the milestone as completed in the same tx, they can call
+        // `finalizeMilestone` (separate call) or we can support a boolean finalize flag in future.
     }
     
     /**
      * @dev Vote on milestone completion (weighted by donation amount)
      */
     function voteOnMilestone(uint256 _milestoneId, bool _approve) external {
-        require(_milestoneId > 0 && _milestoneId <= milestoneCount, "Invalid milestone ID");
+        if (_milestoneId == 0 || _milestoneId > milestoneCount) revert InvalidMilestoneId(_milestoneId);
         Milestone storage milestone = milestones[_milestoneId];
-        require(milestone.completed, "Milestone not completed yet");
-        require(!milestone.approved, "Milestone already approved");
-        require(block.timestamp < milestone.votingDeadline, "Voting period ended");
-        require(!milestoneVotes[_milestoneId][msg.sender], "Already voted");
+        if (!milestone.completed) revert MilestoneNotCompleted(_milestoneId);
+        if (milestone.approved) revert MilestoneAlreadyApproved(_milestoneId);
+        if (block.timestamp >= milestone.votingDeadline) revert VotingPeriodEnded(_milestoneId);
+        if (milestoneVotes[_milestoneId][msg.sender]) revert AlreadyVoted(_milestoneId, msg.sender);
         
-        // Calculate voting weight based on donation amount
-        uint256 weight = projectDonations[milestone.projectId][msg.sender];
-        require(weight > 0, "Must be a donor to vote");
+        // Calculate voting weight based on donation amount (donations to this contract/project)
+        uint256 weight = projectDonations[msg.sender];
+        if (weight == 0) revert NotADonor(msg.sender);
         
         milestoneVotes[_milestoneId][msg.sender] = true;
         
@@ -264,12 +279,12 @@ contract AidChain is Initializable, ReentrancyGuard, OwnableUpgradeable, UUPSUpg
      */
     function approveMilestone(uint256 _milestoneId) internal {
         Milestone storage milestone = milestones[_milestoneId];
-        require(!milestone.approved, "Already approved");
+        if (milestone.approved) revert MilestoneAlreadyApproved(_milestoneId);
         
         milestone.approved = true;
         
         // Release funds to project creator
-        Project storage project = projects[milestone.projectId];
+        Project storage p = project;
         uint256 releaseAmount = milestone.fundingAmount;
         
         if (releaseAmount > address(this).balance) {
@@ -277,40 +292,54 @@ contract AidChain is Initializable, ReentrancyGuard, OwnableUpgradeable, UUPSUpg
         }
         
         if (releaseAmount > 0) {
-            payable(project.creator).transfer(releaseAmount);
-            
+            payable(p.creator).transfer(releaseAmount);
+
             // Update project reputation
-            project.reputationScore += MILESTONE_REPUTATION_BOOST;
-            
+            p.reputationScore += MILESTONE_REPUTATION_BOOST;
+
             // Award AID tokens to project creator
-            aidToken.mint(project.creator, MILESTONE_COMPLETION_REWARD * 10**18);
+            aidToken.mint(p.creator, MILESTONE_COMPLETION_REWARD * 10**18);
         }
         
         emit MilestoneApproved(_milestoneId, milestone.projectId);
         emit FundsReleased(milestone.projectId, _milestoneId, releaseAmount);
     }
+
+    /**
+     * @dev Finalize a milestone (mark completed). Separate from anchoring proofs to reduce
+     * frequent state changes — creators can anchor many proofs off-chain and then call this
+     * to mark the milestone completed when ready.
+     */
+    function finalizeMilestone(uint256 _milestoneId) external {
+        if (_milestoneId == 0 || _milestoneId > milestoneCount) revert InvalidMilestoneId(_milestoneId);
+        Milestone storage milestone = milestones[_milestoneId];
+        if (msg.sender != project.creator) revert NotProjectCreator(msg.sender);
+        if (milestone.completed) revert MilestoneAlreadyCompleted(_milestoneId);
+
+        milestone.completed = true;
+        emit MilestoneFinalized(_milestoneId, block.timestamp);
+    }
     
     /**
      * @dev Get project details
      */
-    function getProject(uint256 _projectId) external view returns (Project memory) {
-        require(_projectId > 0 && _projectId <= projectCount, "Invalid project ID");
-        return projects[_projectId];
+    function getProject() external view returns (Project memory) {
+        return project;
     }
     
     /**
      * @dev Get milestone details
      */
     function getMilestone(uint256 _milestoneId) external view returns (Milestone memory) {
-        require(_milestoneId > 0 && _milestoneId <= milestoneCount, "Invalid milestone ID");
+        if (_milestoneId == 0 || _milestoneId > milestoneCount) revert InvalidMilestoneId(_milestoneId);
         return milestones[_milestoneId];
     }
     
     /**
      * @dev Get milestones for a project
      */
-    function getProjectMilestones(uint256 _projectId) external view returns (uint256[] memory) {
-        return projectMilestones[_projectId];
+    function getProjectMilestones() external view returns (uint256[] memory) {
+        return projectMilestones;
     }
     
     /**

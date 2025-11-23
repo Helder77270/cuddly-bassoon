@@ -16,6 +16,13 @@ contract DeployAidChain is Script {
         // Get deployment private key from environment
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
         
+        // Get project parameters (or use defaults for testing)
+        address projectCreator = vm.envOr("PROJECT_CREATOR", msg.sender);
+        string memory projectName = vm.envOr("PROJECT_NAME", string("Humanitarian Aid Project"));
+        string memory projectDescription = vm.envOr("PROJECT_DESCRIPTION", string("Decentralized humanitarian funding project"));
+        string memory projectIPFS = vm.envOr("PROJECT_IPFS", string("QmDefaultIPFSHash"));
+        uint256 fundingGoal = vm.envOr("FUNDING_GOAL", uint256(10 ether));
+        
         // Start broadcasting transactions
         vm.startBroadcast(deployerPrivateKey);
         
@@ -23,11 +30,18 @@ contract DeployAidChain is Script {
         AidChainFactory factory = new AidChainFactory();
         console.log("AidChainFactory deployed at:", address(factory));
         
-        // Deploy the complete system through factory
-        (address aidTokenProxy, address aidChainProxy) = factory.deployCompleteSystem();
+        // Deploy the complete system through factory for this project
+        (address aidTokenProxy, address aidChainProxy) = factory.deployCompleteSystem(
+            projectCreator,
+            projectName,
+            projectDescription,
+            projectIPFS,
+            fundingGoal
+        );
         
         console.log("AIDToken Proxy deployed at:", aidTokenProxy);
         console.log("AidChain Proxy deployed at:", aidChainProxy);
+        console.log("Project Creator:", projectCreator);
         
         // Get implementation addresses
         (
@@ -50,6 +64,8 @@ contract DeployAidChain is Script {
         console.log("Factory:", address(factory));
         console.log("AIDToken Proxy:", aidTokenProxy);
         console.log("AidChain Proxy:", aidChainProxy);
+        console.log("Project:", projectName);
+        console.log("Funding Goal:", fundingGoal);
         console.log("==========================\n");
     }
 }

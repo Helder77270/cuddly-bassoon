@@ -5,7 +5,8 @@ libs = ["lib"]
 solc_version = "0.8.22"
 # Note: solc path configured for build environment
 # In production, Foundry will auto-download the correct version
-solc = "/tmp/solc-0.8.22"
+# Let Foundry auto-download the requested solc version during build
+# solc = "/tmp/solc-0.8.22"
 optimizer = true
 optimizer_runs = 200
 via_ir = false

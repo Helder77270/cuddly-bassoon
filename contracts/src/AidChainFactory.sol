@@ -55,13 +55,26 @@ contract AidChainFactory is Ownable {
     }
     
     /**
-     * @dev Deploy a new AidChain with upgradeable proxy
+     * @dev Deploy a new AidChain with upgradeable proxy (single project)
      * @param _aidTokenAddress The address of the AIDToken contract
+     * @param _creator The project creator (will own the contract)
+     * @param _name Project name
+     * @param _description Project description
+     * @param _ipfsHash IPFS hash for project media
+     * @param _fundingGoal Funding goal in wei
      * @return proxy The address of the deployed proxy
      * @return implementation The address of the implementation contract
      */
-    function deployAidChain(address _aidTokenAddress) public onlyOwner returns (address proxy, address implementation) {
+    function deployAidChain(
+        address _aidTokenAddress,
+        address _creator,
+        string memory _name,
+        string memory _description,
+        string memory _ipfsHash,
+        uint256 _fundingGoal
+    ) public onlyOwner returns (address proxy, address implementation) {
         require(_aidTokenAddress != address(0), "Invalid AIDToken address");
+        require(_creator != address(0), "Invalid creator address");
         
         // Deploy implementation
         AidChain aidChainImpl = new AidChain();
@@ -70,7 +83,12 @@ contract AidChainFactory is Ownable {
         // Deploy proxy
         bytes memory initData = abi.encodeWithSelector(
             AidChain.initialize.selector,
-            _aidTokenAddress
+            _aidTokenAddress,
+            _creator,
+            _name,
+            _description,
+            _ipfsHash,
+            _fundingGoal
         );
         ERC1967Proxy aidChainProxy = new ERC1967Proxy(implementation, initData);
         proxy = address(aidChainProxy);
@@ -82,11 +100,22 @@ contract AidChainFactory is Ownable {
     }
     
     /**
-     * @dev Deploy complete AidChain system (AIDToken + AidChain)
+     * @dev Deploy complete AidChain system (AIDToken + AidChain) for a single project
+     * @param _creator The project creator
+     * @param _name Project name
+     * @param _description Project description
+     * @param _ipfsHash IPFS hash for project media
+     * @param _fundingGoal Funding goal in wei
      * @return aidTokenProxy The address of the AIDToken proxy
      * @return aidChainProxy The address of the AidChain proxy
      */
-    function deployCompleteSystem() external onlyOwner returns (
+    function deployCompleteSystem(
+        address _creator,
+        string memory _name,
+        string memory _description,
+        string memory _ipfsHash,
+        uint256 _fundingGoal
+    ) external onlyOwner returns (
         address aidTokenProxy,
         address aidChainProxy
     ) {
@@ -94,16 +123,23 @@ contract AidChainFactory is Ownable {
         address aidTokenImpl;
         (aidTokenProxy, aidTokenImpl) = deployAIDToken();
         
-        // Deploy AidChain
+        // Deploy AidChain for this specific project
         address aidChainImpl;
-        (aidChainProxy, aidChainImpl) = deployAidChain(aidTokenProxy);
+        (aidChainProxy, aidChainImpl) = deployAidChain(
+            aidTokenProxy,
+            _creator,
+            _name,
+            _description,
+            _ipfsHash,
+            _fundingGoal
+        );
         
         // Set AidChain as authorized minter on AIDToken
         AIDToken(aidTokenProxy).setAidChainContract(aidChainProxy);
         
-        // Transfer ownership of contracts to factory owner
+        // Note: Project creator (_creator) is already the owner of the AidChain contract
+        // Transfer AIDToken ownership to factory owner for management
         AIDToken(aidTokenProxy).transferOwnership(owner());
-        AidChain(aidChainProxy).transferOwnership(owner());
         
         // Record deployment
         deployments.push(Deployment({
