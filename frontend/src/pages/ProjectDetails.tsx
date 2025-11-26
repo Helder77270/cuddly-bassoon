@@ -1,89 +1,104 @@
-import { useState, useEffect } from 'react'
-import { useParams } from 'react-router-dom'
-import { useDynamicContext } from '@dynamic-labs/sdk-react'
-import { CheckCircle, AlertCircle, Calendar, Target, Heart, TrendingUp } from 'lucide-react'
-import blockchainService from '../services/blockchain'
-import ipfsService from '../services/ipfs'
-import toast from 'react-hot-toast'
+import { useState, useEffect, ChangeEvent } from 'react';
+import { useParams } from 'react-router-dom';
+import { useDynamicContext } from '@dynamic-labs/sdk-react';
+import { CheckCircle, AlertCircle, Calendar, Target, Heart, TrendingUp } from 'lucide-react';
+import blockchainService from '../services/blockchain';
+import ipfsService from '../services/ipfs';
+import toast from 'react-hot-toast';
+import { Project, Milestone, IPFSMetadata } from '../types';
 
-export default function ProjectDetails() {
-  const { id } = useParams()
-  const { user } = useDynamicContext()
-  const [project, setProject] = useState(null)
-  const [milestones, setMilestones] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [donationAmount, setDonationAmount] = useState('')
-  const [projectMetadata, setProjectMetadata] = useState(null)
+interface DynamicUser {
+  verifiedCredentials?: Array<{
+    address: string;
+  }>;
+}
+
+interface DynamicContext {
+  user: DynamicUser | null;
+}
+
+export default function ProjectDetails(): JSX.Element {
+  const { id } = useParams<{ id: string }>();
+  const { user } = useDynamicContext() as DynamicContext;
+  const [project, setProject] = useState<Project | null>(null);
+  const [milestones, setMilestones] = useState<Milestone[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [donationAmount, setDonationAmount] = useState<string>('');
+  const [projectMetadata, setProjectMetadata] = useState<IPFSMetadata | null>(null);
 
   useEffect(() => {
-    loadProjectDetails()
-  }, [id])
+    loadProjectDetails();
+  }, [id]);
 
-  async function loadProjectDetails() {
+  async function loadProjectDetails(): Promise<void> {
+    if (!id) return;
+    
     try {
-      setLoading(true)
-      const projectData = await blockchainService.getProject(id)
-      setProject(projectData)
+      setLoading(true);
+      const projectData = await blockchainService.getProject(id);
+      setProject(projectData);
 
       // Load IPFS metadata
       if (projectData.ipfsHash) {
         try {
-          const metadata = await ipfsService.getFile(projectData.ipfsHash)
-          setProjectMetadata(metadata)
+          const metadata = await ipfsService.getFile<IPFSMetadata>(projectData.ipfsHash);
+          setProjectMetadata(metadata);
         } catch (error) {
-          console.error('Error loading IPFS metadata:', error)
+          console.error('Error loading IPFS metadata:', error);
         }
       }
 
       // Load milestones
-      const milestoneIds = await blockchainService.getProjectMilestones(id)
+      const milestoneIds = await blockchainService.getProjectMilestones(id);
       const milestonesData = await Promise.all(
         milestoneIds.map(mId => blockchainService.getMilestone(mId))
-      )
-      setMilestones(milestonesData)
+      );
+      setMilestones(milestonesData);
     } catch (error) {
-      console.error('Error loading project details:', error)
-      toast.error('Failed to load project details')
+      console.error('Error loading project details:', error);
+      toast.error('Failed to load project details');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   }
 
-  async function handleDonate() {
+  async function handleDonate(): Promise<void> {
     if (!user) {
-      toast.error('Please connect your wallet first')
-      return
+      toast.error('Please connect your wallet first');
+      return;
     }
 
     if (!donationAmount || parseFloat(donationAmount) <= 0) {
-      toast.error('Please enter a valid donation amount')
-      return
+      toast.error('Please enter a valid donation amount');
+      return;
     }
 
+    if (!id) return;
+
     try {
-      await blockchainService.fundProject(id, donationAmount)
-      toast.success('Donation successful! Thank you for your support!')
-      setDonationAmount('')
-      loadProjectDetails()
+      await blockchainService.fundProject(id, donationAmount);
+      toast.success('Donation successful! Thank you for your support!');
+      setDonationAmount('');
+      loadProjectDetails();
     } catch (error) {
-      console.error('Error donating:', error)
-      toast.error('Failed to process donation')
+      console.error('Error donating:', error);
+      toast.error('Failed to process donation');
     }
   }
 
-  async function handleVote(milestoneId, approve) {
+  async function handleVote(milestoneId: string, approve: boolean): Promise<void> {
     if (!user) {
-      toast.error('Please connect your wallet first')
-      return
+      toast.error('Please connect your wallet first');
+      return;
     }
 
     try {
-      await blockchainService.voteOnMilestone(milestoneId, approve)
-      toast.success('Vote recorded successfully!')
-      loadProjectDetails()
+      await blockchainService.voteOnMilestone(milestoneId, approve);
+      toast.success('Vote recorded successfully!');
+      loadProjectDetails();
     } catch (error) {
-      console.error('Error voting:', error)
-      toast.error('Failed to record vote')
+      console.error('Error voting:', error);
+      toast.error('Failed to record vote');
     }
   }
 
@@ -93,7 +108,7 @@ export default function ProjectDetails() {
         <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500"></div>
         <p className="text-gray-400 mt-4">Loading project...</p>
       </div>
-    )
+    );
   }
 
   if (!project) {
@@ -101,10 +116,10 @@ export default function ProjectDetails() {
       <div className="text-center py-12">
         <p className="text-gray-400 text-lg">Project not found</p>
       </div>
-    )
+    );
   }
 
-  const progress = (parseFloat(project.fundsRaised) / parseFloat(project.fundingGoal)) * 100
+  const progress = (parseFloat(project.fundsRaised) / parseFloat(project.fundingGoal)) * 100;
 
   return (
     <div className="max-w-6xl mx-auto">
@@ -248,7 +263,7 @@ export default function ProjectDetails() {
               <input
                 type="number"
                 value={donationAmount}
-                onChange={(e) => setDonationAmount(e.target.value)}
+                onChange={(e: ChangeEvent<HTMLInputElement>) => setDonationAmount(e.target.value)}
                 step="0.01"
                 min="0.01"
                 className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-primary-500"
@@ -271,5 +286,5 @@ export default function ProjectDetails() {
         </div>
       </div>
     </div>
-  )
+  );
 }

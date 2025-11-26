@@ -106,6 +106,12 @@ npm run dev
 
 The backend should now be running on `http://localhost:3001`
 
+### 3.4 Build for Production
+```bash
+npm run build
+npm start
+```
+
 ## Step 4: Frontend Deployment
 
 ### 4.1 Install Dependencies
@@ -148,7 +154,12 @@ npm run dev
 
 The frontend should now be running on `http://localhost:3000`
 
-### 4.4 Production Build
+### 4.4 Type Checking
+```bash
+npx tsc --noEmit
+```
+
+### 4.5 Production Build
 ```bash
 npm run build
 ```

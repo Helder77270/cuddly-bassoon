@@ -1,8 +1,13 @@
-import { Link } from 'react-router-dom'
-import { Target, Calendar, CheckCircle, AlertCircle } from 'lucide-react'
+import { Link } from 'react-router-dom';
+import { Target, Calendar, CheckCircle, AlertCircle } from 'lucide-react';
+import { Project } from '../types';
 
-export default function ProjectCard({ project }) {
-  const progress = (parseFloat(project.fundsRaised) / parseFloat(project.fundingGoal)) * 100
+interface ProjectCardProps {
+  project: Project;
+}
+
+export default function ProjectCard({ project }: ProjectCardProps): JSX.Element {
+  const progress = (parseFloat(project.fundsRaised) / parseFloat(project.fundingGoal)) * 100;
 
   return (
     <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl overflow-hidden border border-gray-700 hover:border-primary-500 transition">
@@ -53,5 +58,5 @@ export default function ProjectCard({ project }) {
         </Link>
       </div>
     </div>
-  )
+  );
 }

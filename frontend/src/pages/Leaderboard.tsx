@@ -1,70 +1,71 @@
-import { useState, useEffect } from 'react'
-import { Trophy, Medal, Award } from 'lucide-react'
-import blockchainService from '../services/blockchain'
-import toast from 'react-hot-toast'
+import { useState, useEffect } from 'react';
+import { Trophy, Medal, Award } from 'lucide-react';
+import blockchainService from '../services/blockchain';
+import toast from 'react-hot-toast';
+import { Project, LeaderboardDonor } from '../types';
 
-export default function Leaderboard() {
-  const [donors, setDonors] = useState([])
-  const [projects, setProjects] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState('donors')
+export default function Leaderboard(): JSX.Element {
+  const [donors, setDonors] = useState<LeaderboardDonor[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [activeTab, setActiveTab] = useState<'donors' | 'projects'>('donors');
 
   useEffect(() => {
-    loadLeaderboard()
-  }, [])
+    loadLeaderboard();
+  }, []);
 
-  async function loadLeaderboard() {
+  async function loadLeaderboard(): Promise<void> {
     try {
-      setLoading(true)
+      setLoading(true);
       
       // Load all projects and calculate their reputation
-      const projectCount = await blockchainService.getProjectCount()
-      const projectsData = []
+      const projectCount = await blockchainService.getProjectCount();
+      const projectsData: Project[] = [];
 
       for (let i = 1; i <= projectCount; i++) {
         try {
-          const project = await blockchainService.getProject(i)
-          projectsData.push(project)
+          const project = await blockchainService.getProject(i);
+          projectsData.push(project);
         } catch (error) {
-          console.error(`Error loading project ${i}:`, error)
+          console.error(`Error loading project ${i}:`, error);
         }
       }
 
       // Sort projects by reputation score
       const sortedProjects = projectsData
         .sort((a, b) => parseInt(b.reputationScore) - parseInt(a.reputationScore))
-        .slice(0, 10)
+        .slice(0, 10);
 
-      setProjects(sortedProjects)
+      setProjects(sortedProjects);
 
       // For donors, we would need to track unique donors
       // This is a simplified version
-      const mockDonors = [
+      const mockDonors: LeaderboardDonor[] = [
         { address: '0x1234...5678', totalDonated: '5.5', aidTokens: '5500', rank: 1 },
         { address: '0x8765...4321', totalDonated: '3.2', aidTokens: '3200', rank: 2 },
         { address: '0xabcd...efgh', totalDonated: '2.1', aidTokens: '2100', rank: 3 },
-      ]
-      setDonors(mockDonors)
+      ];
+      setDonors(mockDonors);
     } catch (error) {
-      console.error('Error loading leaderboard:', error)
-      toast.error('Failed to load leaderboard')
+      console.error('Error loading leaderboard:', error);
+      toast.error('Failed to load leaderboard');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   }
 
-  const getRankIcon = (rank) => {
+  const getRankIcon = (rank: number): JSX.Element => {
     switch (rank) {
       case 1:
-        return <Trophy className="w-6 h-6 text-yellow-500" />
+        return <Trophy className="w-6 h-6 text-yellow-500" />;
       case 2:
-        return <Medal className="w-6 h-6 text-gray-400" />
+        return <Medal className="w-6 h-6 text-gray-400" />;
       case 3:
-        return <Award className="w-6 h-6 text-orange-600" />
+        return <Award className="w-6 h-6 text-orange-600" />;
       default:
-        return <span className="text-gray-400 font-bold">{rank}</span>
+        return <span className="text-gray-400 font-bold">{rank}</span>;
     }
-  }
+  };
 
   if (loading) {
     return (
@@ -72,7 +73,7 @@ export default function Leaderboard() {
         <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500"></div>
         <p className="text-gray-400 mt-4">Loading leaderboard...</p>
       </div>
-    )
+    );
   }
 
   return (
@@ -165,5 +166,5 @@ export default function Leaderboard() {
         </div>
       )}
     </div>
-  )
+  );
 }

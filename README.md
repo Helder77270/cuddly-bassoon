@@ -46,18 +46,20 @@ cuddly-bassoon/
 │   ├── src/               # Contract source files
 │   ├── test/              # Contract tests
 │   └── scripts/           # Deployment scripts
-├── frontend/              # React frontend
+├── frontend/              # React frontend (TypeScript)
 │   ├── src/
-│   │   ├── components/    # React components
-│   │   ├── pages/         # Page components
-│   │   ├── services/      # API and blockchain services
-│   │   └── utils/         # Utility functions
+│   │   ├── components/    # React components (.tsx)
+│   │   ├── pages/         # Page components (.tsx)
+│   │   ├── services/      # API and blockchain services (.ts)
+│   │   ├── types/         # TypeScript type definitions
+│   │   └── contracts/     # Contract ABIs
 │   └── public/            # Static assets
-├── backend/               # Backend services
+├── backend/               # Backend services (TypeScript)
 │   ├── src/
-│   │   ├── services/      # ElizaOS, Twitter integration
-│   │   └── routes/        # API routes
-│   └── utils/
+│   │   ├── services/      # ElizaOS, Twitter integration (.ts)
+│   │   ├── types/         # TypeScript type definitions
+│   │   └── index.ts       # Main entry point
+│   └── dist/              # Compiled JavaScript output
 └── docs/                  # Documentation
 ```
 
@@ -250,32 +252,32 @@ npm run test
 ## 🌐 Integration Guide
 
 ### Self Protocol (zkKYC)
-```javascript
-import selfProtocolService from './services/selfProtocol'
+```typescript
+import selfProtocolService from './services/selfProtocol';
 
 // Initiate verification
-const result = await selfProtocolService.initiateVerification(address, userInfo)
+const result = await selfProtocolService.initiateVerification(address, userInfo);
 
 // Submit proof
-await selfProtocolService.submitProof(address, proof)
+await selfProtocolService.submitProof(address, proof);
 ```
 
 ### ElizaOS (Tweet Parsing)
-```javascript
+```typescript
 // Backend service
-const parsedData = await elizaService.parseTweet(tweetUrl)
-const project = await elizaService.createProjectFromTweet(parsedData)
+const parsedData = await elizaService.parseTweet(tweetUrl);
+const project = await elizaService.createProjectFromTweet(parsedData.data);
 ```
 
 ### IPFS
-```javascript
-import ipfsService from './services/ipfs'
+```typescript
+import ipfsService from './services/ipfs';
 
 // Upload project data
-const { metadataHash } = await ipfsService.uploadProjectData(data, files)
+const { metadataHash } = await ipfsService.uploadProjectData(data, files);
 
 // Retrieve data
-const metadata = await ipfsService.getFile(hash)
+const metadata = await ipfsService.getFile<IPFSMetadata>(hash);
 ```
 
 ## 🤝 Contributing
@@ -318,6 +320,7 @@ For support, email support@aidchain.io or join our Discord community.
 
 **Frontend:**
 - React 18
+- TypeScript
 - Vite
 - TailwindCSS
 - ethers.js v6
@@ -335,6 +338,7 @@ For support, email support@aidchain.io or join our Discord community.
 
 **Backend:**
 - Node.js
+- TypeScript
 - Express
 - Twitter API v2
 - OpenAI API

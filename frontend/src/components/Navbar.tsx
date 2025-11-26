@@ -1,9 +1,19 @@
-import { Link } from 'react-router-dom'
-import { useDynamicContext } from '@dynamic-labs/sdk-react'
-import { Wallet, Heart, Trophy, User } from 'lucide-react'
+import { Link } from 'react-router-dom';
+import { useDynamicContext } from '@dynamic-labs/sdk-react';
+import { Wallet, Heart, Trophy, User } from 'lucide-react';
 
-export default function Navbar() {
-  const { setShowAuthFlow, user, handleLogOut } = useDynamicContext()
+interface DynamicUser {
+  email?: string;
+}
+
+interface DynamicContext {
+  setShowAuthFlow: (show: boolean) => void;
+  user: DynamicUser | null;
+  handleLogOut: () => void;
+}
+
+export default function Navbar(): JSX.Element {
+  const { setShowAuthFlow, user, handleLogOut } = useDynamicContext() as DynamicContext;
 
   return (
     <nav className="bg-gray-900/80 backdrop-blur-md border-b border-gray-800">
@@ -57,5 +67,5 @@ export default function Navbar() {
         </div>
       </div>
     </nav>
-  )
+  );
 }

@@ -528,15 +528,17 @@ socket.on('milestone:approved', (data) => {
 
 ### Creating a Project
 
-```javascript
-import { blockchainService, ipfsService } from './services'
+```typescript
+import blockchainService from './services/blockchain';
+import ipfsService from './services/ipfs';
+import { ProjectFormData, UploadProjectDataResult } from './types';
 
-async function createProject(projectData, files) {
+async function createProject(projectData: ProjectFormData, files: File[]): Promise<string> {
   // 1. Upload to IPFS
-  const { metadataHash } = await ipfsService.uploadProjectData(
+  const { metadataHash }: UploadProjectDataResult = await ipfsService.uploadProjectData(
     projectData, 
     files
-  )
+  );
   
   // 2. Create on blockchain
   const receipt = await blockchainService.createProject(
@@ -544,16 +546,16 @@ async function createProject(projectData, files) {
     projectData.description,
     metadataHash,
     projectData.fundingGoal
-  )
+  );
   
   // 3. Get project ID from event
-  const event = receipt.logs.find(log => log.eventName === 'ProjectCreated')
-  const projectId = event.args.projectId
+  const event = receipt.logs.find(log => log.eventName === 'ProjectCreated');
+  const projectId = event?.args?.projectId;
   
   // 4. Verify zkKYC
-  await blockchainService.verifyZKKYC(projectId)
+  await blockchainService.verifyZKKYC(projectId);
   
-  return projectId
+  return projectId.toString();
 }
 ```
 
@@ -561,11 +563,11 @@ async function createProject(projectData, files) {
 
 ### Making a Donation
 
-```javascript
-async function donateToProject(projectId, amount) {
-  const success = await blockchainService.fundProject(projectId, amount)
+```typescript
+async function donateToProject(projectId: string, amount: string): Promise<void> {
+  const success = await blockchainService.fundProject(projectId, amount);
   if (success) {
-    console.log('Donation successful!')
+    console.log('Donation successful!');
     // User will receive AID tokens automatically
   }
 }
@@ -575,19 +577,15 @@ async function donateToProject(projectId, amount) {
 
 ### Voting on Milestone
 
-```javascript
-async function voteOnMilestone(milestoneId, approve) {
-  // Check if user is a donor
-  const project = await blockchainService.getProject(projectId)
-  const myAddress = await signer.getAddress()
-  
+```typescript
+async function voteOnMilestone(milestoneId: string, approve: boolean): Promise<boolean> {
   // Vote
   const success = await blockchainService.voteOnMilestone(
     milestoneId, 
     approve
-  )
+  );
   
-  return success
+  return success;
 }
 ```
 
