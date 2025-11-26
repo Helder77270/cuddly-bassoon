@@ -292,6 +292,25 @@ async function deployProject(parsedData: ParsedProjectData) {
     ethers.parseEther(parsedData.totalAmount)
   );
   
+  // 2.1 Extract projectId from transaction receipt using contract interface
+  const receipt = await tx.wait();
+  const iface = aidChainContract.interface;
+  const projectCreatedEvent = receipt.logs
+    .map((log: any) => {
+      try {
+        return iface.parseLog({ topics: log.topics, data: log.data });
+      } catch {
+        return null;
+      }
+    })
+    .find((parsed: any) => parsed?.name === 'ProjectCreated');
+  
+  if (!projectCreatedEvent) {
+    throw new Error('ProjectCreated event not found in transaction receipt');
+  }
+  
+  const projectId = projectCreatedEvent.args.projectId;
+  
   // 3. Create milestones
   for (const milestone of parsedData.milestones) {
     await aidChainContract.createMilestone(
