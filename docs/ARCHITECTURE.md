@@ -286,22 +286,40 @@ Smart Contract → Update Reputation Scores
 
 ### ElizaOS Auto-Creation Flow
 
+> 📖 For complete end-to-end process documentation, see [PROCESS_FLOW.md](PROCESS_FLOW.md)
+
 ```
-User → Tweet Humanitarian Need
+User → Tweet on AidChain X Page
   ↓
-Twitter → Webhook/Stream to Backend
+Backend → Poll for Tweets (Every 5 minutes)
   ↓
-Backend → ElizaOS Parse Tweet
+System → Check Like Threshold (≥15 likes)
   ↓
-ElizaOS → Extract Structured Data
+Backend → Send to ElizaOS for Analysis
   ↓
-Backend → Generate Project Proposal
+ElizaOS → Validate Required Content:
+  • Project title
+  • Clear description
+  • Total amount in XRP
+  • Milestone breakdown
   ↓
-Backend → Notify Original Tweeter
+Backend → Deploy Project on Blockchain
   ↓
-User → Claim Project & Complete zkKYC
+Backend → DM Tweet Author with Project Link
   ↓
-System → Create Project on Blockchain
+User → Login via Dynamic Wallet (auto-created if needed)
+  ↓
+Admin → Access Project Forum (posts, files, pictures)
+  ↓
+Admin → Complete Self.xyz KYC
+  ↓
+System → Unlock First Milestone
+  ↓
+Admin → Submit Proof, Request Vote
+  ↓
+Funders → Vote to Approve/Reject Milestones
+  ↓
+[Loop until all milestones complete]
 ```
 
 ## Security Considerations
