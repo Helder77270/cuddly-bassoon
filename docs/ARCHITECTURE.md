@@ -84,10 +84,11 @@ AidChain is a decentralized humanitarian funding protocol built on Ripple Accela
 
 ## Component Details
 
-### 1. Frontend Layer (React + Vite)
+### 1. Frontend Layer (React + Vite + TypeScript)
 
 **Technologies:**
 - React 18
+- TypeScript
 - Vite (Build tool)
 - TailwindCSS (Styling)
 - ethers.js v6 (Blockchain interaction)
@@ -95,31 +96,38 @@ AidChain is a decentralized humanitarian funding protocol built on Ripple Accela
 - Zustand (State management)
 
 **Key Components:**
-- `Navbar` - Navigation and wallet connection
-- `ProjectCard` - Display project information
-- `Home` - List all projects
-- `CreateProject` - Project creation form
-- `ProjectDetails` - Detailed project view with donations
-- `Leaderboard` - Impact ranking display
-- `Profile` - User donation history
+- `Navbar.tsx` - Navigation and wallet connection
+- `ProjectCard.tsx` - Display project information
+- `Home.tsx` - List all projects
+- `CreateProject.tsx` - Project creation form
+- `ProjectDetails.tsx` - Detailed project view with donations
+- `Leaderboard.tsx` - Impact ranking display
+- `Profile.tsx` - User donation history
 
 **Services:**
-- `blockchain.js` - Smart contract interactions
-- `ipfs.js` - Decentralized storage
-- `selfProtocol.js` - zkKYC verification
+- `blockchain.ts` - Smart contract interactions
+- `ipfs.ts` - Decentralized storage
+- `selfProtocol.ts` - zkKYC verification
 
-### 2. Backend Layer (Node.js + Express)
+**Type Definitions:**
+- `types/index.ts` - Shared TypeScript interfaces
+
+### 2. Backend Layer (Node.js + Express + TypeScript)
 
 **Technologies:**
 - Node.js
+- TypeScript
 - Express
 - Twitter API v2
 - OpenAI API
 - Axios
 
 **Services:**
-- `elizaService.js` - AI-powered tweet parsing
-- `twitterService.js` - Twitter monitoring and integration
+- `elizaService.ts` - AI-powered tweet parsing
+- `twitterService.ts` - Twitter monitoring and integration
+
+**Type Definitions:**
+- `types/index.ts` - Shared TypeScript interfaces
 
 **Endpoints:**
 - `/api/eliza/parse-tweet` - Parse humanitarian tweets

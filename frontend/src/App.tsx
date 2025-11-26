@@ -1,14 +1,14 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
-import { DynamicContextProvider } from '@dynamic-labs/sdk-react'
-import { Toaster } from 'react-hot-toast'
-import Navbar from './components/Navbar'
-import Home from './pages/Home'
-import CreateProject from './pages/CreateProject'
-import ProjectDetails from './pages/ProjectDetails'
-import Leaderboard from './pages/Leaderboard'
-import Profile from './pages/Profile'
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { DynamicContextProvider } from '@dynamic-labs/sdk-react';
+import { Toaster } from 'react-hot-toast';
+import Navbar from './components/Navbar';
+import Home from './pages/Home';
+import CreateProject from './pages/CreateProject';
+import ProjectDetails from './pages/ProjectDetails';
+import Leaderboard from './pages/Leaderboard';
+import Profile from './pages/Profile';
 
-function App() {
+function App(): JSX.Element {
   return (
     <DynamicContextProvider
       settings={{
@@ -32,7 +32,7 @@ function App() {
         </div>
       </Router>
     </DynamicContextProvider>
-  )
+  );
 }
 
-export default App
+export default App;

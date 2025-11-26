@@ -1,25 +1,35 @@
-const { OpenAI } = require('openai')
+import OpenAI from 'openai';
+import {
+  ParseTweetResult,
+  ParsedTweetData,
+  CreateProjectResult,
+  AnalysisResult,
+  RecommendationsResult,
+  DonationHistory
+} from '../types';
 
 /**
  * ElizaOS Service
  * Simulates ElizaOS integration for parsing tweets and automatically creating projects
  */
 class ElizaService {
+  private openai: OpenAI;
+
   constructor() {
     this.openai = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY
-    })
+    });
   }
 
   /**
    * Parse a tweet to extract humanitarian project information
    */
-  async parseTweet(tweetUrl) {
+  async parseTweet(tweetUrl: string): Promise<ParseTweetResult> {
     try {
       // In production, this would fetch the actual tweet
       // For now, we'll simulate the parsing
       
-      const tweetContent = "We need urgent help to provide clean water to 5,000 families in rural Kenya. Estimated cost: 10 ETH. #HumanitarianAid #CleanWater"
+      const tweetContent = "We need urgent help to provide clean water to 5,000 families in rural Kenya. Estimated cost: 10 ETH. #HumanitarianAid #CleanWater";
       
       // Use AI to extract structured data from the tweet
       const completion = await this.openai.chat.completions.create({
@@ -37,9 +47,17 @@ class ElizaService {
           }
         ],
         temperature: 0.3
-      })
+      });
 
-      const parsedData = JSON.parse(completion.choices[0].message.content)
+      const responseContent = completion.choices[0].message.content || '{}';
+      let parsedData: Partial<ParsedTweetData>;
+      
+      try {
+        parsedData = JSON.parse(responseContent) as Partial<ParsedTweetData>;
+      } catch {
+        console.warn('Failed to parse AI response as JSON, using fallback');
+        parsedData = {};
+      }
       
       return {
         success: true,
@@ -52,9 +70,9 @@ class ElizaService {
           source: tweetUrl,
           parsedAt: new Date().toISOString()
         }
-      }
+      };
     } catch (error) {
-      console.error('Error in parseTweet:', error)
+      console.error('Error in parseTweet:', error);
       
       // Fallback to basic parsing
       return {
@@ -68,14 +86,14 @@ class ElizaService {
           source: tweetUrl,
           parsedAt: new Date().toISOString()
         }
-      }
+      };
     }
   }
 
   /**
    * Create a project from parsed tweet data
    */
-  async createProjectFromTweet(tweetData) {
+  async createProjectFromTweet(tweetData: ParsedTweetData): Promise<CreateProjectResult> {
     try {
       // This would integrate with the blockchain service
       // to automatically create a project from the parsed tweet data
@@ -91,23 +109,23 @@ class ElizaService {
           autoCreated: true,
           createdAt: new Date().toISOString()
         }
-      }
+      };
 
       return {
         success: true,
         project: projectData,
         message: 'Project data prepared for blockchain submission'
-      }
+      };
     } catch (error) {
-      console.error('Error in createProjectFromTweet:', error)
-      throw error
+      console.error('Error in createProjectFromTweet:', error);
+      throw error;
     }
   }
 
   /**
    * Analyze project sentiment and credibility
    */
-  async analyzeProjectCredibility(projectDescription) {
+  async analyzeProjectCredibility(projectDescription: string): Promise<AnalysisResult> {
     try {
       const completion = await this.openai.chat.completions.create({
         model: "gpt-3.5-turbo",
@@ -122,25 +140,26 @@ class ElizaService {
           }
         ],
         temperature: 0.3
-      })
+      });
 
       return {
         success: true,
-        analysis: completion.choices[0].message.content
-      }
+        analysis: completion.choices[0].message.content || undefined
+      };
     } catch (error) {
-      console.error('Error in analyzeProjectCredibility:', error)
+      console.error('Error in analyzeProjectCredibility:', error);
+      const err = error as Error;
       return {
         success: false,
-        error: error.message
-      }
+        error: err.message
+      };
     }
   }
 
   /**
    * Generate project recommendations
    */
-  async generateRecommendations(userDonationHistory) {
+  async generateRecommendations(userDonationHistory: DonationHistory[]): Promise<RecommendationsResult> {
     try {
       const completion = await this.openai.chat.completions.create({
         model: "gpt-3.5-turbo",
@@ -155,20 +174,21 @@ class ElizaService {
           }
         ],
         temperature: 0.7
-      })
+      });
 
       return {
         success: true,
-        recommendations: completion.choices[0].message.content
-      }
+        recommendations: completion.choices[0].message.content || undefined
+      };
     } catch (error) {
-      console.error('Error in generateRecommendations:', error)
+      console.error('Error in generateRecommendations:', error);
+      const err = error as Error;
       return {
         success: false,
-        error: error.message
-      }
+        error: err.message
+      };
     }
   }
 }
 
-module.exports = new ElizaService()
+export default new ElizaService();

@@ -1,75 +1,82 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { useDynamicContext } from '@dynamic-labs/sdk-react'
-import { Upload, CheckCircle } from 'lucide-react'
-import blockchainService from '../services/blockchain'
-import ipfsService from '../services/ipfs'
-import selfProtocolService from '../services/selfProtocol'
-import toast from 'react-hot-toast'
+import { useState, ChangeEvent, FormEvent } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useDynamicContext } from '@dynamic-labs/sdk-react';
+import { Upload, CheckCircle } from 'lucide-react';
+import blockchainService from '../services/blockchain';
+import ipfsService from '../services/ipfs';
+import selfProtocolService from '../services/selfProtocol';
+import toast from 'react-hot-toast';
+import { ProjectFormData, DynamicUser, TransactionLog } from '../types';
 
-export default function CreateProject() {
-  const navigate = useNavigate()
-  const { user } = useDynamicContext()
-  const [loading, setLoading] = useState(false)
-  const [files, setFiles] = useState([])
-  const [formData, setFormData] = useState({
+interface DynamicContext {
+  user: DynamicUser | null;
+}
+
+export default function CreateProject(): JSX.Element {
+  const navigate = useNavigate();
+  const { user } = useDynamicContext() as DynamicContext;
+  const [loading, setLoading] = useState<boolean>(false);
+  const [files, setFiles] = useState<File[]>([]);
+  const [formData, setFormData] = useState<ProjectFormData>({
     name: '',
     description: '',
     fundingGoal: '',
     location: '',
     category: '',
-  })
-  const [zkKYCVerified, setZkKYCVerified] = useState(false)
+  });
+  const [zkKYCVerified, setZkKYCVerified] = useState<boolean>(false);
 
-  const handleInputChange = (e) => {
+  const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>): void => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,
-    })
-  }
+    });
+  };
 
-  const handleFileChange = (e) => {
-    setFiles(Array.from(e.target.files))
-  }
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>): void => {
+    if (e.target.files) {
+      setFiles(Array.from(e.target.files));
+    }
+  };
 
-  const handleVerifyKYC = async () => {
+  const handleVerifyKYC = async (): Promise<void> => {
     try {
-      setLoading(true)
+      setLoading(true);
       // In production, this would integrate with Self Protocol for real zkKYC
-      const result = await selfProtocolService.mockVerification(user.verifiedCredentials[0].address)
+      const result = await selfProtocolService.mockVerification(user?.verifiedCredentials?.[0]?.address || '');
       
       if (result.success) {
-        setZkKYCVerified(true)
-        toast.success('zkKYC verification successful!')
+        setZkKYCVerified(true);
+        toast.success('zkKYC verification successful!');
       } else {
-        toast.error('zkKYC verification failed')
+        toast.error('zkKYC verification failed');
       }
     } catch (error) {
-      console.error('Error verifying KYC:', error)
-      toast.error('Failed to verify KYC')
+      console.error('Error verifying KYC:', error);
+      toast.error('Failed to verify KYC');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>): Promise<void> => {
+    e.preventDefault();
 
     if (!user) {
-      toast.error('Please connect your wallet first')
-      return
+      toast.error('Please connect your wallet first');
+      return;
     }
 
     if (!zkKYCVerified) {
-      toast.error('Please complete zkKYC verification first')
-      return
+      toast.error('Please complete zkKYC verification first');
+      return;
     }
 
     try {
-      setLoading(true)
+      setLoading(true);
 
       // Upload project data and files to IPFS
-      const { metadataHash } = await ipfsService.uploadProjectData(formData, files)
+      const { metadataHash } = await ipfsService.uploadProjectData(formData, files);
 
       // Create project on blockchain
       const receipt = await blockchainService.createProject(
@@ -77,26 +84,26 @@ export default function CreateProject() {
         formData.description,
         metadataHash,
         formData.fundingGoal
-      )
+      );
 
       // Get the project ID from the event
-      const event = receipt.logs.find(log => log.eventName === 'ProjectCreated')
-      const projectId = event?.args?.projectId
+      const event = (receipt.logs as TransactionLog[]).find(log => log.eventName === 'ProjectCreated');
+      const projectId = event?.args?.projectId;
 
       if (projectId) {
         // Verify zkKYC on-chain
-        await blockchainService.verifyZKKYC(projectId)
+        await blockchainService.verifyZKKYC(projectId.toString());
         
-        toast.success('Project created successfully!')
-        navigate(`/project/${projectId}`)
+        toast.success('Project created successfully!');
+        navigate(`/project/${projectId}`);
       }
     } catch (error) {
-      console.error('Error creating project:', error)
-      toast.error('Failed to create project')
+      console.error('Error creating project:', error);
+      toast.error('Failed to create project');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -239,5 +246,5 @@ export default function CreateProject() {
         </button>
       </form>
     </div>
-  )
+  );
 }

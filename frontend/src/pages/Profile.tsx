@@ -1,43 +1,50 @@
-import { useState, useEffect } from 'react'
-import { useDynamicContext } from '@dynamic-labs/sdk-react'
-import { Wallet, Heart, Trophy, Award } from 'lucide-react'
-import blockchainService from '../services/blockchain'
-import toast from 'react-hot-toast'
+import { useState, useEffect } from 'react';
+import { useDynamicContext } from '@dynamic-labs/sdk-react';
+import { Wallet, Heart, Trophy, Award } from 'lucide-react';
+import blockchainService from '../services/blockchain';
+import toast from 'react-hot-toast';
+import { Donation, DynamicUser } from '../types';
 
-export default function Profile() {
-  const { user } = useDynamicContext()
-  const [donationHistory, setDonationHistory] = useState([])
-  const [reputation, setReputation] = useState('0')
-  const [aidBalance, setAidBalance] = useState('0')
-  const [loading, setLoading] = useState(true)
+interface DynamicContext {
+  user: DynamicUser | null;
+}
+
+export default function Profile(): JSX.Element {
+  const { user } = useDynamicContext() as DynamicContext;
+  const [donationHistory, setDonationHistory] = useState<Donation[]>([]);
+  const [reputation, setReputation] = useState<string>('0');
+  const [aidBalance, setAidBalance] = useState<string>('0');
+  const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
     if (user?.verifiedCredentials?.[0]?.address) {
-      loadUserProfile()
+      loadUserProfile();
     }
-  }, [user])
+  }, [user]);
 
-  async function loadUserProfile() {
+  async function loadUserProfile(): Promise<void> {
     try {
-      setLoading(true)
-      const address = user.verifiedCredentials[0].address
+      setLoading(true);
+      const address = user?.verifiedCredentials?.[0]?.address;
+
+      if (!address) return;
 
       // Load donation history
-      const history = await blockchainService.getDonorHistory(address)
-      setDonationHistory(history)
+      const history = await blockchainService.getDonorHistory(address);
+      setDonationHistory(history);
 
       // Load reputation
-      const rep = await blockchainService.getDonorReputation(address)
-      setReputation(rep)
+      const rep = await blockchainService.getDonorReputation(address);
+      setReputation(rep);
 
       // Load AID token balance
-      const balance = await blockchainService.getAIDBalance(address)
-      setAidBalance(balance)
+      const balance = await blockchainService.getAIDBalance(address);
+      setAidBalance(balance);
     } catch (error) {
-      console.error('Error loading profile:', error)
-      toast.error('Failed to load profile')
+      console.error('Error loading profile:', error);
+      toast.error('Failed to load profile');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   }
 
@@ -48,7 +55,7 @@ export default function Profile() {
         <h2 className="text-2xl font-bold text-white mb-4">Connect Your Wallet</h2>
         <p className="text-gray-400">Please connect your wallet to view your profile</p>
       </div>
-    )
+    );
   }
 
   if (loading) {
@@ -57,7 +64,7 @@ export default function Profile() {
         <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500"></div>
         <p className="text-gray-400 mt-4">Loading profile...</p>
       </div>
-    )
+    );
   }
 
   return (
@@ -98,7 +105,7 @@ export default function Profile() {
         <div className="space-y-4">
           <div>
             <p className="text-gray-400 text-sm mb-1">Address</p>
-            <p className="text-white font-mono">{user.verifiedCredentials[0].address}</p>
+            <p className="text-white font-mono">{user.verifiedCredentials?.[0]?.address}</p>
           </div>
           {user.email && (
             <div>
@@ -136,5 +143,5 @@ export default function Profile() {
         )}
       </div>
     </div>
-  )
+  );
 }

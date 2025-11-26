@@ -1,9 +1,10 @@
-import { Link } from 'react-router-dom'
-import { useDynamicContext } from '@dynamic-labs/sdk-react'
-import { Wallet, Heart, Trophy, User } from 'lucide-react'
+import { Link } from 'react-router-dom';
+import { useDynamicContext } from '@dynamic-labs/sdk-react';
+import { Wallet, Heart, Trophy, User } from 'lucide-react';
+import { DynamicUser, DynamicContextType } from '../types';
 
-export default function Navbar() {
-  const { setShowAuthFlow, user, handleLogOut } = useDynamicContext()
+export default function Navbar(): JSX.Element {
+  const { setShowAuthFlow, user, handleLogOut } = useDynamicContext() as DynamicContextType;
 
   return (
     <nav className="bg-gray-900/80 backdrop-blur-md border-b border-gray-800">
@@ -57,5 +58,5 @@ export default function Navbar() {
         </div>
       </div>
     </nav>
-  )
+  );
 }

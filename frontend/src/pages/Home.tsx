@@ -1,49 +1,50 @@
-import { useState, useEffect } from 'react'
-import { Search, Filter } from 'lucide-react'
-import ProjectCard from '../components/ProjectCard'
-import blockchainService from '../services/blockchain'
-import toast from 'react-hot-toast'
+import { useState, useEffect } from 'react';
+import { Search, Filter } from 'lucide-react';
+import ProjectCard from '../components/ProjectCard';
+import blockchainService from '../services/blockchain';
+import toast from 'react-hot-toast';
+import { Project } from '../types';
 
-export default function Home() {
-  const [projects, setProjects] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [searchTerm, setSearchTerm] = useState('')
-  const [filterVerified, setFilterVerified] = useState(false)
+export default function Home(): JSX.Element {
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [filterVerified, setFilterVerified] = useState<boolean>(false);
 
   useEffect(() => {
-    loadProjects()
-  }, [])
+    loadProjects();
+  }, []);
 
-  async function loadProjects() {
+  async function loadProjects(): Promise<void> {
     try {
-      setLoading(true)
-      const count = await blockchainService.getProjectCount()
-      const projectsData = []
+      setLoading(true);
+      const count = await blockchainService.getProjectCount();
+      const projectsData: Project[] = [];
 
       for (let i = 1; i <= count; i++) {
         try {
-          const project = await blockchainService.getProject(i)
-          projectsData.push(project)
+          const project = await blockchainService.getProject(i);
+          projectsData.push(project);
         } catch (error) {
-          console.error(`Error loading project ${i}:`, error)
+          console.error(`Error loading project ${i}:`, error);
         }
       }
 
-      setProjects(projectsData)
+      setProjects(projectsData);
     } catch (error) {
-      console.error('Error loading projects:', error)
-      toast.error('Failed to load projects')
+      console.error('Error loading projects:', error);
+      toast.error('Failed to load projects');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   }
 
   const filteredProjects = projects.filter(project => {
     const matchesSearch = project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         project.description.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesFilter = !filterVerified || project.zkKYCVerified
-    return matchesSearch && matchesFilter
-  })
+                         project.description.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesFilter = !filterVerified || project.zkKYCVerified;
+    return matchesSearch && matchesFilter;
+  });
 
   return (
     <div className="max-w-7xl mx-auto">
@@ -97,5 +98,5 @@ export default function Home() {
         </div>
       )}
     </div>
-  )
+  );
 }
