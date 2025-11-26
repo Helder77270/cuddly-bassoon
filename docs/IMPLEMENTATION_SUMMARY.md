@@ -141,6 +141,15 @@ AidChain is a comprehensive decentralized humanitarian funding protocol built on
 - Security considerations
 - Scalability approach
 
+✅ **PROCESS_FLOW.md**
+- Complete end-to-end process documentation
+- Tweet monitoring and like threshold (15 likes)
+- ElizaOS content validation requirements
+- Dynamic wallet integration
+- Self.xyz KYC verification flow
+- Milestone voting system
+- Implementation checklists
+
 #### 6. Configuration
 
 ✅ **Environment Files**

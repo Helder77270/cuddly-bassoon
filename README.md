@@ -193,6 +193,79 @@ PRIVATE_KEY=your_private_key
 3. **Project Created**: System extracts project details and creates proposal
 4. **zkKYC Required**: Project creator still needs identity verification
 
+## 🔄 Complete Process Flow
+
+> 📖 For detailed technical documentation, see [docs/PROCESS_FLOW.md](docs/PROCESS_FLOW.md)
+
+The AidChain platform operates through the following automated process:
+
+```
+1. TWEET DISCOVERY
+   └─► User tweets on AidChain's X page with project request
+
+2. BACKEND MONITORING (Every 5 minutes)
+   └─► System polls for new tweets
+
+3. ENGAGEMENT CHECK
+   └─► Tweet reaches 15+ likes threshold
+
+4. ELIZAOS ANALYSIS
+   └─► AI validates content contains:
+       • Project title
+       • Clear description
+       • Total amount in XRP
+       • Milestone breakdown
+
+5. PROJECT DEPLOYMENT
+   └─► Backend deploys project to blockchain
+
+6. USER NOTIFICATION
+   └─► DM sent to tweet author with project link
+
+7. WALLET SETUP
+   └─► User logs in via Dynamic Wallet
+       (auto-created if needed)
+
+8. PROJECT MANAGEMENT
+   └─► Admin accesses forum to add:
+       • Posts and updates
+       • Files and documents
+       • Pictures and media
+
+9. KYC VERIFICATION (Self.xyz)
+   └─► Required before first milestone unlock
+       • Verify human identity
+       • zkKYC proof generated
+
+10. FIRST MILESTONE UNLOCK
+    └─► Admin unlocks initial funds to start activity
+
+11. PROOF SUBMISSION
+    └─► Admin documents progress with evidence
+
+12. VOTE REQUEST
+    └─► Admin requests funder vote for next milestone
+
+13. FUNDER VOTING
+    └─► Donors vote (weighted by contribution)
+        • Approve: Funds released
+        • Reject: Funds held
+
+14. LOOP UNTIL COMPLETION
+    └─► Steps 11-13 repeat for each milestone
+```
+
+### Key Components
+
+| Component | Purpose | Technology |
+|-----------|---------|------------|
+| **Tweet Monitoring** | Discover humanitarian needs | Twitter API |
+| **Content Analysis** | Validate project requests | ElizaOS (AI) |
+| **Wallet Management** | Easy user onboarding | Dynamic Labs |
+| **Identity Verification** | Ensure human verification | Self.xyz (zkKYC) |
+| **Fund Management** | Milestone-based releases | Smart Contracts |
+| **Voting System** | Democratic fund approval | Weighted voting |
+
 ## 🧪 Testing
 
 ### Smart Contracts
