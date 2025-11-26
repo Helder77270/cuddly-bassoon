@@ -6,23 +6,10 @@ import blockchainService from '../services/blockchain';
 import ipfsService from '../services/ipfs';
 import selfProtocolService from '../services/selfProtocol';
 import toast from 'react-hot-toast';
-import { ProjectFormData } from '../types';
-
-interface DynamicUser {
-  verifiedCredentials?: Array<{
-    address: string;
-  }>;
-}
+import { ProjectFormData, DynamicUser, TransactionLog } from '../types';
 
 interface DynamicContext {
   user: DynamicUser | null;
-}
-
-interface TransactionLog {
-  eventName?: string;
-  args?: {
-    projectId?: string | bigint;
-  };
 }
 
 export default function CreateProject(): JSX.Element {

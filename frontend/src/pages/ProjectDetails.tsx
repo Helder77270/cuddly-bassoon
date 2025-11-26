@@ -5,13 +5,7 @@ import { CheckCircle, AlertCircle, Calendar, Target, Heart, TrendingUp } from 'l
 import blockchainService from '../services/blockchain';
 import ipfsService from '../services/ipfs';
 import toast from 'react-hot-toast';
-import { Project, Milestone, IPFSMetadata } from '../types';
-
-interface DynamicUser {
-  verifiedCredentials?: Array<{
-    address: string;
-  }>;
-}
+import { Project, Milestone, IPFSMetadata, DynamicUser } from '../types';
 
 interface DynamicContext {
   user: DynamicUser | null;

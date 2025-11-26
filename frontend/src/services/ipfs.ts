@@ -46,8 +46,14 @@ class IPFSService {
 
   async getFile<T = unknown>(hash: string): Promise<T> {
     try {
-      const response = await axios.get<T>(`${IPFS_GATEWAY}${hash}`);
-      return response.data;
+      const response = await axios.get<unknown>(`${IPFS_GATEWAY}${hash}`);
+      
+      // Basic validation - ensure we got a response
+      if (response.data === null || response.data === undefined) {
+        throw new Error('IPFS returned empty content');
+      }
+      
+      return response.data as T;
     } catch (error) {
       console.error('Error getting file from IPFS:', error);
       throw error;

@@ -15,15 +15,23 @@ const PORT = process.env.PORT || 3001;
 // Configure multer for file uploads
 const upload = multer({ storage: multer.memoryStorage() });
 
+// Validate IPFS credentials
+const IPFS_PROJECT_ID = process.env.IPFS_PROJECT_ID;
+const IPFS_PROJECT_SECRET = process.env.IPFS_PROJECT_SECRET;
+
+if (!IPFS_PROJECT_ID || !IPFS_PROJECT_SECRET) {
+  console.warn('Warning: IPFS_PROJECT_ID or IPFS_PROJECT_SECRET not set. IPFS uploads will fail.');
+}
+
 // Initialize IPFS client (server-side only for security)
 const ipfsClient: IPFSHTTPClient = create({
   host: 'ipfs.infura.io',
   port: 5001,
   protocol: 'https',
   headers: {
-    authorization: `Basic ${Buffer.from(
-      `${process.env.IPFS_PROJECT_ID}:${process.env.IPFS_PROJECT_SECRET}`
-    ).toString('base64')}`,
+    authorization: IPFS_PROJECT_ID && IPFS_PROJECT_SECRET
+      ? `Basic ${Buffer.from(`${IPFS_PROJECT_ID}:${IPFS_PROJECT_SECRET}`).toString('base64')}`
+      : '',
   },
 });
 

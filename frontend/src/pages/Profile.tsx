@@ -3,14 +3,7 @@ import { useDynamicContext } from '@dynamic-labs/sdk-react';
 import { Wallet, Heart, Trophy, Award } from 'lucide-react';
 import blockchainService from '../services/blockchain';
 import toast from 'react-hot-toast';
-import { Donation } from '../types';
-
-interface DynamicUser {
-  email?: string;
-  verifiedCredentials?: Array<{
-    address: string;
-  }>;
-}
+import { Donation, DynamicUser } from '../types';
 
 interface DynamicContext {
   user: DynamicUser | null;

@@ -49,7 +49,15 @@ class ElizaService {
         temperature: 0.3
       });
 
-      const parsedData = JSON.parse(completion.choices[0].message.content || '{}') as Partial<ParsedTweetData>;
+      const responseContent = completion.choices[0].message.content || '{}';
+      let parsedData: Partial<ParsedTweetData>;
+      
+      try {
+        parsedData = JSON.parse(responseContent) as Partial<ParsedTweetData>;
+      } catch {
+        console.warn('Failed to parse AI response as JSON, using fallback');
+        parsedData = {};
+      }
       
       return {
         success: true,

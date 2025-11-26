@@ -6,13 +6,6 @@ import { Project, Milestone, Donation } from '../types';
 const AIDCHAIN_ADDRESS = import.meta.env.VITE_AIDCHAIN_ADDRESS;
 const AIDTOKEN_ADDRESS = import.meta.env.VITE_AIDTOKEN_ADDRESS;
 
-// Extended window interface for ethereum
-declare global {
-  interface Window {
-    ethereum?: ethers.Eip1193Provider;
-  }
-}
-
 class BlockchainService {
   private provider: ethers.BrowserProvider | null = null;
   private signer: ethers.Signer | null = null;
